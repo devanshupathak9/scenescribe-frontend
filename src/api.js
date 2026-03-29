@@ -14,7 +14,8 @@ async function request(method, path, body, isFormData = false) {
   if (body) options.body = isFormData ? body : JSON.stringify(body);
 
   const res = await fetch(`${BASE}${path}`, options);
-  const data = await res.json();
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : {};
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
 }
