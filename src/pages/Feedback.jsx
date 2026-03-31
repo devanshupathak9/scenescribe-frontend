@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useParams, useLocation, Link, useNavigate } from 'react-router-dom'
+import { useParams, useLocation, Link } from 'react-router-dom'
 import { api } from '../api.js'
 
 const GRADE_LABELS = { A: 'Excellent!', B: 'Great job!', C: 'Good effort!', D: 'Keep going!', F: 'Keep practicing!' }
 
 function ScoreRing({ score }) {
+  // score is 0-10; ring uses 0-100 percentage
+  const pct = score * 10
   return (
-    <div
-      className="score-ring"
-      style={{ '--pct': score }}
-    >
-      <span className="score-number">{score}</span>
+    <div className="score-ring" style={{ '--pct': pct }}>
+      <span className="score-number">{score}<span style={{ fontSize: '1rem', fontWeight: 500 }}>/10</span></span>
     </div>
   )
 }
@@ -18,7 +17,6 @@ function ScoreRing({ score }) {
 export default function Feedback() {
   const { id } = useParams()
   const { state } = useLocation()
-  const navigate = useNavigate()
 
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(!state)
@@ -150,6 +148,47 @@ export default function Feedback() {
             </div>
             <div className="native-rewrite">
               "{feedback.native_rewrite}"
+            </div>
+          </div>
+        )}
+
+        {/* Notes section */}
+        {feedback.notes && (
+          <div className="feedback-section notes-section">
+            <div className="feedback-section-title" style={{ color: 'var(--accent-light)' }}>
+              📝 Notes
+            </div>
+            <div className="notes-grid">
+              {feedback.notes.grammar?.length > 0 && (
+                <div className="notes-card">
+                  <div className="notes-card-title">Grammar</div>
+                  <ul className="feedback-list">
+                    {feedback.notes.grammar.map((n, i) => (
+                      <li key={i} data-icon="•" style={{ color: 'var(--text-2)' }}>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {feedback.notes.vocabulary?.length > 0 && (
+                <div className="notes-card">
+                  <div className="notes-card-title">Vocabulary</div>
+                  <ul className="feedback-list">
+                    {feedback.notes.vocabulary.map((n, i) => (
+                      <li key={i} data-icon="•" style={{ color: 'var(--text-2)' }}>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {feedback.notes.structure?.length > 0 && (
+                <div className="notes-card">
+                  <div className="notes-card-title">Sentence Structure</div>
+                  <ul className="feedback-list">
+                    {feedback.notes.structure.map((n, i) => (
+                      <li key={i} data-icon="•" style={{ color: 'var(--text-2)' }}>{n}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}

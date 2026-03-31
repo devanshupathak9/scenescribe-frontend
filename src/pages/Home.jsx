@@ -4,6 +4,13 @@ import { api } from '../api.js'
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/)
+  if (!match) return null
+  return `https://www.youtube.com/embed/${match[1]}`
+}
+
 export default function Home({ user, updateUser }) {
   const [scene, setScene] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -127,12 +134,16 @@ export default function Home({ user, updateUser }) {
 
       {/* Video Player */}
       <div className="scene-video-wrap">
-        <video
-          src={scene.video_url}
-          controls
-          preload="metadata"
-          key={scene.id}
-        />
+        {getYouTubeEmbedUrl(scene.youtube_url) ? (
+          <iframe
+            src={getYouTubeEmbedUrl(scene.youtube_url)}
+            title={scene.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <div className="video-placeholder">No video available</div>
+        )}
       </div>
 
       {/* Scene header */}

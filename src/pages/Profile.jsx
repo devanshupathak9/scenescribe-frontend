@@ -70,6 +70,13 @@ export default function Profile({ user }) {
           </div>
           <div className="stat-label">Submissions</div>
         </div>
+        <div className="stat-card">
+          <span className="stat-icon">📊</span>
+          <div className="stat-value" style={{ color: 'var(--success)' }}>
+            {loading ? '–' : (profile?.average_score ?? '–')}
+          </div>
+          <div className="stat-label">Avg Score /10</div>
+        </div>
       </div>
 
       {/* History */}

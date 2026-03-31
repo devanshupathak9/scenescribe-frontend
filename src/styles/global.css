@@ -673,10 +673,22 @@ select.form-input {
   border: 1px solid var(--border);
 }
 
+.scene-video-wrap iframe,
 .scene-video-wrap video {
   width: 100%;
   height: 100%;
+  border: none;
   object-fit: contain;
+}
+
+.video-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .scene-header {
@@ -1021,10 +1033,37 @@ select.form-input {
   font-style: italic;
 }
 
+/* ── Notes section (Feedback) ── */
+.notes-section {
+  border-left: 3px solid var(--accent);
+}
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.notes-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.notes-card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent-light);
+  margin-bottom: 10px;
+}
+
 /* ── Profile page ── */
 .profile-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 32px;
 }
@@ -1137,6 +1176,35 @@ select.form-input {
 }
 
 /* ── Admin page ── */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.admin-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.dynamic-item {
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dynamic-item-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .admin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -1319,9 +1387,60 @@ select.form-input {
 }
 
 /* ── Responsive ── */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .container,
+  .container-wide {
+    padding: 0 16px;
+  }
+
+  .page {
+    padding: 24px 0 48px;
+  }
+
+  /* Navbar: hide nav link labels, keep icons/buttons */
+  .navbar-links .nav-link {
+    padding: 7px 10px;
+    font-size: 0.8rem;
+  }
+
+  .navbar-right .nav-stat {
+    display: none;
+  }
+
+  /* Admin form: single column on tablet */
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-meta-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Profile stats: 2x2 grid */
   .profile-stats {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  /* Notes grid: single column */
+  .notes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Feedback hero */
+  .feedback-hero {
+    padding: 36px 16px 28px;
+  }
+
+  .page-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Profile stats: 2 columns */
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
@@ -1329,15 +1448,75 @@ select.form-input {
     font-size: 1.5rem;
   }
 
-  .feedback-stats {
-    gap: 16px;
+  .stat-card {
+    padding: 14px 10px;
   }
 
-  .navbar-links .nav-link span {
-    display: none;
-  }
-
+  /* Scene header */
   .scene-header {
     flex-direction: column;
+  }
+
+  .scene-title {
+    font-size: 1.2rem;
+  }
+
+  /* Submit row */
+  .submit-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .submit-row .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* History item */
+  .history-item {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  /* Admin meta grid: single column on small phones */
+  .admin-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dynamic-item-fields {
+    grid-template-columns: 1fr;
+  }
+
+  /* Feedback stats */
+  .feedback-stats {
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  /* Tabs: allow wrap */
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    font-size: 0.8rem;
+    padding: 8px 10px;
+  }
+
+  /* Page header */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  /* Card padding */
+  .card {
+    padding: 16px;
   }
 }

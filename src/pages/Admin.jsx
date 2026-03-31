@@ -16,16 +16,18 @@ export default function Admin() {
   const [scenes, setScenes] = useState(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [scenesLoading, setScenesLoading] = useState(false)
+  const [dateFilter, setDateFilter] = useState('')
 
   // Upload form state
   const [form, setForm] = useState({
     title: '',
     description: '',
+    youtube_url: '',
+    reference_description: '',
     publish_date: new Date().toISOString().split('T')[0],
     language: 'English',
     difficulty: 'intermediate',
   })
-  const [videoFile, setVideoFile] = useState(null)
   const [vocabs, setVocabs] = useState([{ ...EMPTY_VOCAB }])
   const [grammars, setGrammars] = useState([{ ...EMPTY_GRAMMAR }])
   const [uploading, setUploading] = useState(false)
@@ -40,14 +42,25 @@ export default function Admin() {
         .catch(() => {})
         .finally(() => setAnalyticsLoading(false))
     }
-    if (tab === 'scenes' && !scenes) {
-      setScenesLoading(true)
-      api.get('/admin/scenes')
-        .then(setScenes)
-        .catch(() => {})
-        .finally(() => setScenesLoading(false))
+    if (tab === 'scenes') {
+      loadScenes(dateFilter)
     }
   }, [tab])
+
+  function loadScenes(date) {
+    setScenesLoading(true)
+    const query = date ? `?date=${date}` : ''
+    api.get(`/admin/scenes${query}`)
+      .then(setScenes)
+      .catch(() => {})
+      .finally(() => setScenesLoading(false))
+  }
+
+  function handleDateFilter(e) {
+    const d = e.target.value
+    setDateFilter(d)
+    loadScenes(d)
+  }
 
   function handleFormChange(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
@@ -55,14 +68,12 @@ export default function Admin() {
     setUploadSuccess('')
   }
 
-  // Vocab helpers
   function updateVocab(i, field, val) {
     setVocabs(v => v.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
   }
   function addVocab() { setVocabs(v => [...v, { ...EMPTY_VOCAB }]) }
   function removeVocab(i) { setVocabs(v => v.filter((_, idx) => idx !== i)) }
 
-  // Grammar helpers
   function updateGrammar(i, field, val) {
     setGrammars(g => g.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
   }
@@ -71,8 +82,8 @@ export default function Admin() {
 
   async function handleUpload(e) {
     e.preventDefault()
-    if (!videoFile) {
-      setUploadError('Please select a video file.')
+    if (!form.youtube_url) {
+      setUploadError('Please provide a YouTube video URL.')
       return
     }
     if (!form.title || !form.publish_date) {
@@ -84,34 +95,33 @@ export default function Admin() {
     setUploadError('')
     setUploadSuccess('')
 
-    const fd = new FormData()
-    fd.append('video', videoFile)
-    fd.append('title', form.title)
-    fd.append('description', form.description)
-    fd.append('publish_date', form.publish_date)
-    fd.append('language', form.language)
-    fd.append('difficulty', form.difficulty)
-
     const filteredVocabs = vocabs.filter(v => v.word.trim() && v.definition.trim())
     const filteredGrammars = grammars.filter(g => g.pattern.trim() && g.explanation.trim())
 
-    if (filteredVocabs.length) fd.append('vocabularies', JSON.stringify(filteredVocabs))
-    if (filteredGrammars.length) fd.append('grammars', JSON.stringify(filteredGrammars))
-
     try {
-      await api.postForm('/admin/scenes', fd)
-      setUploadSuccess('Scene uploaded successfully!')
+      await api.post('/admin/scenes', {
+        title: form.title,
+        description: form.description,
+        youtube_url: form.youtube_url,
+        reference_description: form.reference_description,
+        publish_date: form.publish_date,
+        language: form.language,
+        difficulty: form.difficulty,
+        vocabularies: filteredVocabs,
+        grammars: filteredGrammars,
+      })
+      setUploadSuccess('Scene created successfully!')
       setForm({
         title: '',
         description: '',
+        youtube_url: '',
+        reference_description: '',
         publish_date: new Date().toISOString().split('T')[0],
         language: 'English',
         difficulty: 'intermediate',
       })
-      setVideoFile(null)
       setVocabs([{ ...EMPTY_VOCAB }])
       setGrammars([{ ...EMPTY_GRAMMAR }])
-      // Invalidate scenes cache
       setScenes(null)
     } catch (err) {
       setUploadError(err.message)
@@ -124,7 +134,6 @@ export default function Admin() {
     if (!confirm('Delete this scene? This cannot be undone.')) return
     try {
       await api.delete(`/admin/scenes/${id}`)
-      setScenes(s => ({ ...s, scenes: s.filter ? s : s, }))
       setScenes(prev => prev ? prev.filter(sc => sc.id !== id) : prev)
     } catch (err) {
       alert(err.message)
@@ -135,20 +144,20 @@ export default function Admin() {
     <div className="container-wide page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">⚙️ Admin Dashboard</h1>
+          <h1 className="page-title">Admin Dashboard</h1>
           <p className="page-subtitle">Manage scenes and view analytics</p>
         </div>
       </div>
 
       <div className="tabs">
         <button className={`tab-btn${tab === 'upload' ? ' active' : ''}`} onClick={() => setTab('upload')}>
-          📤 Upload Scene
+          Add Scene
         </button>
         <button className={`tab-btn${tab === 'analytics' ? ' active' : ''}`} onClick={() => setTab('analytics')}>
-          📊 Analytics
+          Analytics
         </button>
         <button className={`tab-btn${tab === 'scenes' ? ' active' : ''}`} onClick={() => setTab('scenes')}>
-          🎬 All Scenes
+          All Scenes
         </button>
       </div>
 
@@ -158,7 +167,7 @@ export default function Admin() {
           {uploadError && <div className="error-msg">{uploadError}</div>}
           {uploadSuccess && <div className="success-msg">✓ {uploadSuccess}</div>}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="admin-form-grid">
             <div>
               <div className="card" style={{ marginBottom: '16px' }}>
                 <h3 style={{ fontWeight: 700, marginBottom: '16px', fontSize: '0.95rem' }}>Scene Details</h3>
@@ -170,12 +179,30 @@ export default function Admin() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Description</label>
-                  <textarea className="form-input" name="description" value={form.description}
-                    onChange={handleFormChange} rows={3} placeholder="Brief description of the scene…" />
+                  <label className="form-label">YouTube Video URL *</label>
+                  <input className="form-input" name="youtube_url" value={form.youtube_url}
+                    onChange={handleFormChange} placeholder="https://www.youtube.com/watch?v=..." required />
+                  {form.youtube_url && (
+                    <p style={{ fontSize: '0.78rem', color: 'var(--success)', marginTop: '4px' }}>
+                      ✓ YouTube URL set
+                    </p>
+                  )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group">
+                  <label className="form-label">Scene Description</label>
+                  <textarea className="form-input" name="description" value={form.description}
+                    onChange={handleFormChange} rows={2} placeholder="Brief description of the scene…" />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Reference Description (benchmark for AI scoring)</label>
+                  <textarea className="form-input" name="reference_description" value={form.reference_description}
+                    onChange={handleFormChange} rows={4}
+                    placeholder="Write an ideal description of this scene. The AI will compare student submissions against this…" />
+                </div>
+
+                <div className="admin-meta-grid">
                   <div className="form-group">
                     <label className="form-label">Publish Date *</label>
                     <input className="form-input" type="date" name="publish_date"
@@ -191,26 +218,10 @@ export default function Admin() {
                 <div className="form-group">
                   <label className="form-label">Difficulty</label>
                   <select className="form-input" name="difficulty" value={form.difficulty} onChange={handleFormChange}>
-                    <option value="easy">Easy</option>
+                    <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
-                    <option value="hard">Hard</option>
+                    <option value="advanced">Advanced</option>
                   </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Video File * (.mp4, .mov, .webm, .avi)</label>
-                  <input
-                    className="form-input"
-                    type="file"
-                    accept=".mp4,.mov,.webm,.avi"
-                    onChange={e => { setVideoFile(e.target.files[0]); setUploadError('') }}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  {videoFile && (
-                    <p style={{ fontSize: '0.78rem', color: 'var(--success)', marginTop: '4px' }}>
-                      ✓ {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(1)} MB)
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -224,8 +235,8 @@ export default function Admin() {
                 </div>
                 <div className="dynamic-list">
                   {vocabs.map((v, i) => (
-                    <div key={i} style={{ background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', padding: '12px', border: '1px solid var(--border)', marginBottom: '8px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                    <div key={i} className="dynamic-item">
+                      <div className="dynamic-item-fields">
                         <input className="form-input" placeholder="Word" value={v.word}
                           onChange={e => updateVocab(i, 'word', e.target.value)} />
                         <input className="form-input" placeholder="Definition" value={v.definition}
@@ -251,8 +262,8 @@ export default function Admin() {
                 </div>
                 <div className="dynamic-list">
                   {grammars.map((g, i) => (
-                    <div key={i} style={{ background: 'var(--bg-2)', borderRadius: 'var(--radius-sm)', padding: '12px', border: '1px solid var(--border)', marginBottom: '8px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                    <div key={i} className="dynamic-item">
+                      <div className="dynamic-item-fields">
                         <input className="form-input" placeholder="Pattern (e.g. Subject + had + V3)" value={g.pattern}
                           onChange={e => updateGrammar(i, 'pattern', e.target.value)} />
                         <input className="form-input" placeholder="Explanation" value={g.explanation}
@@ -274,7 +285,7 @@ export default function Admin() {
 
           <div style={{ marginTop: '24px' }}>
             <button type="submit" className="btn btn-primary btn-lg" disabled={uploading}>
-              {uploading ? <><span className="spinner" /> Uploading…</> : '📤 Upload Scene'}
+              {uploading ? <><span className="spinner" /> Saving…</> : 'Save Scene'}
             </button>
           </div>
         </form>
@@ -302,15 +313,15 @@ export default function Admin() {
                   <div className="value" style={{ color: 'var(--info)' }}>{analytics.total_scenes}</div>
                 </div>
                 <div className="analytics-card">
-                  <div className="label">Average Score</div>
+                  <div className="label">Avg Score (/10)</div>
                   <div className="value" style={{ color: 'var(--warning)' }}>{analytics.average_score}</div>
                 </div>
               </div>
 
               {analytics.recent_submissions?.length > 0 && (
-                <div className="card">
+                <div className="card" style={{ overflowX: 'auto' }}>
                   <h3 style={{ fontWeight: 700, marginBottom: '16px' }}>Recent Submissions</h3>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem', minWidth: '400px' }}>
                     <thead>
                       <tr style={{ color: 'var(--text-muted)', textAlign: 'left' }}>
                         <th style={{ padding: '8px 0', fontWeight: 600 }}>User</th>
@@ -324,7 +335,7 @@ export default function Admin() {
                         <tr key={sub.id} style={{ borderTop: '1px solid var(--border)' }}>
                           <td style={{ padding: '10px 0', color: 'var(--text-2)' }}>{sub.User?.username}</td>
                           <td style={{ padding: '10px 0', color: 'var(--text-2)' }}>{sub.Scene?.title}</td>
-                          <td style={{ padding: '10px 0', fontWeight: 700 }}>{sub.score} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({sub.grade})</span></td>
+                          <td style={{ padding: '10px 0', fontWeight: 700 }}>{sub.score}/10 <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({sub.grade})</span></td>
                           <td style={{ padding: '10px 0', color: 'var(--text-muted)' }}>{formatDate(sub.createdAt)}</td>
                         </tr>
                       ))}
@@ -340,17 +351,36 @@ export default function Admin() {
       {/* All Scenes Tab */}
       {tab === 'scenes' && (
         <div>
+          <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <label className="form-label" style={{ margin: 0 }}>Filter by date:</label>
+            <input
+              className="form-input"
+              type="date"
+              value={dateFilter}
+              onChange={handleDateFilter}
+              style={{ width: 'auto' }}
+            />
+            {dateFilter && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => { setDateFilter(''); loadScenes('') }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
           {scenesLoading && (
             <div className="loading-state"><span className="spinner spinner-lg" /></div>
           )}
-          {scenes && scenes.length === 0 && (
+          {!scenesLoading && scenes && scenes.length === 0 && (
             <div className="empty-state">
               <span className="icon">🎬</span>
-              <h3>No scenes yet</h3>
-              <p>Upload your first scene using the Upload tab.</p>
+              <h3>No scenes found</h3>
+              <p>{dateFilter ? 'No scenes for this date.' : 'Add your first scene using the Add Scene tab.'}</p>
             </div>
           )}
-          {scenes && scenes.length > 0 && (
+          {!scenesLoading && scenes && scenes.length > 0 && (
             <div>
               {scenes.map(sc => (
                 <div key={sc.id} className="scene-list-item">
@@ -361,6 +391,9 @@ export default function Admin() {
                       {formatDate(sc.publish_date)} · {sc.difficulty} · {sc.language} ·{' '}
                       {sc.vocabularies?.length || 0} vocab · {sc.grammars?.length || 0} grammar ·{' '}
                       {sc.submission_count || 0} submissions
+                      {sc.reference_description && (
+                        <span style={{ color: 'var(--success)', marginLeft: '6px' }}>· reference set</span>
+                      )}
                     </div>
                   </div>
                   <button
