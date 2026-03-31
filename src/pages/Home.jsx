@@ -11,22 +11,35 @@ function getYouTubeEmbedUrl(url) {
   return `https://www.youtube.com/embed/${match[1]}`
 }
 
+const gradeColor = { A: 'badge-green', B: 'badge-blue', C: 'badge-orange', D: 'badge-orange', F: 'badge-purple' }
+
 export default function Home({ user, updateUser }) {
   const [scene, setScene] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState('theory')
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const [alreadySubmitted, setAlreadySubmitted] = useState(false)
+  // submittedResult: { submission_id, score, grade, points_awarded, text_content }
+  const [submittedResult, setSubmittedResult] = useState(null)
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     api.get('/scenes/today')
-      .then(setScene)
+      .then(data => {
+        setScene(data)
+        if (data.user_submission) {
+          setSubmittedResult({
+            submission_id: data.user_submission.id,
+            score: data.user_submission.score,
+            grade: data.user_submission.grade,
+            points_awarded: data.user_submission.points_awarded,
+            text_content: data.user_submission.text_content,
+          })
+        }
+      })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -92,13 +105,15 @@ export default function Home({ user, updateUser }) {
         streak: result.new_streak,
         total_points: result.total_points,
       })
-      navigate(`/feedback/${result.submission_id}`, { state: result })
+      setSubmittedResult({
+        submission_id: result.submission_id,
+        score: result.score,
+        grade: result.grade,
+        points_awarded: result.points_awarded,
+        text_content: text.trim(),
+      })
     } catch (err) {
-      if (err.message?.toLowerCase().includes('already submitted')) {
-        setAlreadySubmitted(true)
-      } else {
-        setSubmitError(err.message)
-      }
+      setSubmitError(err.message)
     } finally {
       setSubmitting(false)
     }
@@ -172,92 +187,15 @@ export default function Home({ user, updateUser }) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="tabs">
-        <button
-          className={`tab-btn${tab === 'theory' ? ' active' : ''}`}
-          onClick={() => setTab('theory')}
-        >
-          📚 Theory
-        </button>
-        <button
-          className={`tab-btn${tab === 'describe' ? ' active' : ''}`}
-          onClick={() => setTab('describe')}
-        >
-          ✍️ Describe
-        </button>
-      </div>
-
-      {/* Theory tab */}
-      {tab === 'theory' && (
-        <div>
-          {scene.vocabularies?.length > 0 && (
-            <>
-              <p className="section-title">Vocabulary</p>
-              <div className="vocab-grid">
-                {scene.vocabularies.map(v => (
-                  <div className="vocab-card" key={v.id}>
-                    <div className="vocab-word">{v.word}</div>
-                    <div className="vocab-def">{v.definition}</div>
-                    {v.example && <div className="vocab-example">"{v.example}"</div>}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {scene.grammars?.length > 0 && (
-            <>
-              <p className="section-title">Grammar Patterns</p>
-              <div className="grammar-list">
-                {scene.grammars.map(g => (
-                  <div className="grammar-item" key={g.id}>
-                    <div className="grammar-pattern">{g.pattern}</div>
-                    <div className="grammar-explanation">{g.explanation}</div>
-                    {g.example && (
-                      <div className="vocab-example" style={{ marginTop: '6px' }}>"{g.example}"</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {!scene.vocabularies?.length && !scene.grammars?.length && (
-            <div className="empty-state">
-              <span className="icon">📝</span>
-              <h3>No theory content</h3>
-              <p>Jump to the Describe tab and start writing!</p>
-            </div>
-          )}
-
-          <div style={{ marginTop: '24px' }}>
-            <button className="btn btn-primary" onClick={() => setTab('describe')}>
-              Ready to describe →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Describe tab */}
-      {tab === 'describe' && alreadySubmitted && (
-        <div className="empty-state">
-          <span className="icon">✅</span>
-          <h3>Already submitted!</h3>
-          <p>You've already described this scene today. Come back tomorrow for a new one.</p>
-          <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-            <a href="/profile" className="btn btn-secondary">View your score →</a>
-          </div>
-        </div>
-      )}
-
-      {tab === 'describe' && !alreadySubmitted && (
+      {/* ── BEFORE SUBMISSION: only show the describe form ── */}
+      {!submittedResult && (
         <form onSubmit={handleSubmit} className="describe-section">
+          <p className="section-title">✍️ Describe the Scene</p>
           <div>
             <label className="form-label">Your description</label>
             <textarea
               className="form-input"
-              placeholder="Watch the video and describe what you see. Try to use the vocabulary and grammar patterns from the Theory tab…"
+              placeholder="Watch the video and describe what you see…"
               value={text}
               onChange={e => { setText(e.target.value); setSubmitError('') }}
               rows={7}
@@ -305,6 +243,97 @@ export default function Home({ user, updateUser }) {
             </span>
           </div>
         </form>
+      )}
+
+      {/* ── AFTER SUBMISSION: show result + theory, block resubmission ── */}
+      {submittedResult && (
+        <>
+          {/* Score card */}
+          <div className="card" style={{ marginTop: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                  {submittedResult.score}<span style={{ fontSize: '1.2rem', color: 'var(--text-2)' }}>/10</span>
+                </div>
+                <span className={`badge ${gradeColor[submittedResult.grade] || 'badge-blue'}`} style={{ fontSize: '1rem', padding: '4px 14px' }}>
+                  Grade: {submittedResult.grade}
+                </span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: '4px' }}>✅ Submitted!</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>
+                  +{submittedResult.points_awarded} pts earned · Come back tomorrow for a new scene
+                </div>
+              </div>
+              <button
+                className="btn btn-secondary"
+                onClick={() => navigate(`/feedback/${submittedResult.submission_id}`)}
+              >
+                View Full Feedback →
+              </button>
+            </div>
+
+            {/* Their submission text */}
+            <div style={{ marginTop: '16px' }}>
+              <div className="form-label" style={{ marginBottom: '6px' }}>Your submission</div>
+              <div style={{
+                background: 'var(--surface-2)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '0.9rem',
+                color: 'var(--text-1)',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+              }}>
+                {submittedResult.text_content}
+              </div>
+            </div>
+          </div>
+
+          {/* Theory section */}
+          <div style={{ marginTop: '32px' }}>
+            <p className="section-title">📚 Theory</p>
+
+            {scene.vocabularies?.length > 0 && (
+              <>
+                <p className="section-title" style={{ fontSize: '0.85rem', marginTop: '12px' }}>Vocabulary</p>
+                <div className="vocab-grid">
+                  {scene.vocabularies.map(v => (
+                    <div className="vocab-card" key={v.id}>
+                      <div className="vocab-word">{v.word}</div>
+                      <div className="vocab-def">{v.definition}</div>
+                      {v.example && <div className="vocab-example">"{v.example}"</div>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {scene.grammars?.length > 0 && (
+              <>
+                <p className="section-title" style={{ fontSize: '0.85rem', marginTop: '12px' }}>Grammar Patterns</p>
+                <div className="grammar-list">
+                  {scene.grammars.map(g => (
+                    <div className="grammar-item" key={g.id}>
+                      <div className="grammar-pattern">{g.pattern}</div>
+                      <div className="grammar-explanation">{g.explanation}</div>
+                      {g.example && (
+                        <div className="vocab-example" style={{ marginTop: '6px' }}>"{g.example}"</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {!scene.vocabularies?.length && !scene.grammars?.length && (
+              <div className="empty-state">
+                <span className="icon">📝</span>
+                <h3>No theory content for this scene</h3>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   )
