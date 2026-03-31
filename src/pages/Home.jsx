@@ -19,6 +19,7 @@ export default function Home({ user, updateUser }) {
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef(null)
   const navigate = useNavigate()
@@ -93,7 +94,11 @@ export default function Home({ user, updateUser }) {
       })
       navigate(`/feedback/${result.submission_id}`, { state: result })
     } catch (err) {
-      setSubmitError(err.message)
+      if (err.message?.toLowerCase().includes('already submitted')) {
+        setAlreadySubmitted(true)
+      } else {
+        setSubmitError(err.message)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -235,7 +240,18 @@ export default function Home({ user, updateUser }) {
       )}
 
       {/* Describe tab */}
-      {tab === 'describe' && (
+      {tab === 'describe' && alreadySubmitted && (
+        <div className="empty-state">
+          <span className="icon">✅</span>
+          <h3>Already submitted!</h3>
+          <p>You've already described this scene today. Come back tomorrow for a new one.</p>
+          <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <a href="/profile" className="btn btn-secondary">View your score →</a>
+          </div>
+        </div>
+      )}
+
+      {tab === 'describe' && !alreadySubmitted && (
         <form onSubmit={handleSubmit} className="describe-section">
           <div>
             <label className="form-label">Your description</label>
