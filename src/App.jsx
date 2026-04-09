@@ -41,11 +41,6 @@ export default function App() {
     setUser(null)
   }
 
-  function updateUser(updated) {
-    localStorage.setItem('user', JSON.stringify(updated))
-    setUser(updated)
-  }
-
   return (
     <BrowserRouter>
       {user && <Navbar user={user} onLogout={logout} />}
@@ -55,7 +50,7 @@ export default function App() {
           <Route path="/register" element={user ? <Navigate to="/" /> : <Register onLogin={login} />} />
           <Route path="/" element={
             <PrivateRoute user={user}>
-              <Home user={user} updateUser={updateUser} />
+              <Home user={user} />
             </PrivateRoute>
           } />
           <Route path="/feedback/:id" element={

@@ -4,25 +4,28 @@ function getToken() {
   return localStorage.getItem('token');
 }
 
-async function request(method, path, body, isFormData = false) {
-  const headers = {};
+async function request(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
   const token = getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  if (!isFormData) headers['Content-Type'] = 'application/json';
 
   const options = { method, headers };
-  if (body) options.body = isFormData ? body : JSON.stringify(body);
+  if (body !== undefined) options.body = JSON.stringify(body);
 
   const res = await fetch(`${BASE}${path}`, options);
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+
+  if (!res.ok) {
+    const message = data.error?.message || data.error || `Request failed (${res.status})`;
+    throw new Error(message);
+  }
   return data;
 }
 
 export const api = {
   get: (path) => request('GET', path),
   post: (path, body) => request('POST', path, body),
+  patch: (path, body) => request('PATCH', path, body),
   delete: (path) => request('DELETE', path),
-  postForm: (path, formData) => request('POST', path, formData, true),
 };

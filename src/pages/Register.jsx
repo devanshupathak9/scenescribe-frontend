@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api.js'
 
 export default function Register({ onLogin }) {
-  const [form, setForm] = useState({ username: '', email: '', password: '' })
+  const [form, setForm] = useState({ user_name: '', email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -13,7 +13,7 @@ export default function Register({ onLogin }) {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
+    if (e?.preventDefault) e.preventDefault()
     if (form.password.length < 6) {
       setError('Password must be at least 6 characters')
       return
@@ -21,8 +21,8 @@ export default function Register({ onLogin }) {
     setLoading(true)
     setError('')
     try {
-      const data = await api.post('/auth/register', form)
-      onLogin(data.user, data.token)
+      const res = await api.post('/auth/register', { user_name: form.user_name, email: form.email, password: form.password })
+      onLogin(res.data.user, res.data.token)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -84,7 +84,7 @@ export default function Register({ onLogin }) {
 
           {error && <div className="error-msg">{error}</div>}
 
-          <form onSubmit={handleSubmit}>
+          <div>
             <div className="form-group">
               <label className="form-label">Username</label>
               <div className="input-icon-wrap">
@@ -92,11 +92,11 @@ export default function Register({ onLogin }) {
                 <input
                   className="form-input"
                   type="text"
-                  name="username"
+                  name="user_name"
                   placeholder="coollearner42"
-                  value={form.username}
+                  value={form.user_name}
                   onChange={handleChange}
-                  required
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
                   autoFocus
                 />
               </div>
@@ -113,7 +113,7 @@ export default function Register({ onLogin }) {
                   placeholder="you@example.com"
                   value={form.email}
                   onChange={handleChange}
-                  required
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
                 />
               </div>
             </div>
@@ -129,21 +129,21 @@ export default function Register({ onLogin }) {
                   placeholder="Min. 6 characters"
                   value={form.password}
                   onChange={handleChange}
-                  required
-                  minLength={6}
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
                 />
               </div>
             </div>
 
             <button
               className="btn btn-primary btn-full btn-lg"
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={loading}
               style={{ marginTop: 8 }}
             >
               {loading ? <><span className="spinner" /> Creating account…</> : 'Create Account →'}
             </button>
-          </form>
+          </div>
 
           <p className="auth-link">
             Already have an account? <Link to="/login">Sign in</Link>

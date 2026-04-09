@@ -1,207 +1,164 @@
 import { useState, useEffect } from 'react'
-import { useParams, useLocation, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { api } from '../api.js'
 
-const GRADE_LABELS = { A: 'Excellent!', B: 'Great job!', C: 'Good effort!', D: 'Keep going!', F: 'Keep practicing!' }
-
 function ScoreRing({ score }) {
-  // score is 0-10; ring uses 0-100 percentage
-  const pct = score * 10
+  const r = 28
+  const cx = 36
+  const cy = 36
+  const circumference = 2 * Math.PI * r
+  const offset = circumference * (1 - score / 10)
   return (
-    <div className="score-ring" style={{ '--pct': pct }}>
-      <span className="score-number">{score}<span style={{ fontSize: '1rem', fontWeight: 500 }}>/10</span></span>
+    <svg width="72" height="72" style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+      <circle
+        cx={cx} cy={cy} r={r} fill="none"
+        stroke="#e8ff47" strokeWidth="6"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+      />
+      <text
+        x={cx} y={cy + 1}
+        textAnchor="middle" dominantBaseline="middle"
+        fill="#f0f0f0" fontSize="20" fontFamily="Syne" fontWeight="700"
+        style={{ transform: 'rotate(90deg)', transformOrigin: `${cx}px ${cy}px` }}
+      >
+        {score}
+      </text>
+    </svg>
+  )
+}
+
+function SentenceBlock({ label, text, accentColor }) {
+  if (!text) return null
+  return (
+    <div className="sentence-block" style={{ borderLeftColor: accentColor }}>
+      <div className="sentence-label">{label}</div>
+      <div className="sentence-text">{text}</div>
     </div>
   )
 }
 
 export default function Feedback() {
   const { id } = useParams()
-  const { state } = useLocation()
-
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(!state)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (state) {
-      setData(state)
-      return
-    }
-    api.get(`/submissions/${id}`)
-      .then(sub => {
-        setData({
-          score: sub.score,
-          grade: sub.grade,
-          points_awarded: sub.points_awarded,
-          feedback: sub.feedback,
-          new_streak: null,
-          total_points: null,
-        })
-      })
+    api.get(`/profile/history/${id}`)
+      .then(res => setData(res.data))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
-  }, [id, state])
+  }, [id])
 
   if (loading) {
-    return (
-      <div className="loading-state">
-        <span className="spinner spinner-lg" />
-        Loading feedback…
-      </div>
-    )
+    return <div className="loading-state"><span className="spinner" /> Loading feedback…</div>
   }
 
   if (error) {
     return (
       <div className="container page">
         <div className="error-msg">{error}</div>
-        <Link to="/" className="btn btn-secondary">← Back to Home</Link>
+        <Link to="/" className="btn-secondary" style={{ marginTop: '16px', display: 'inline-block' }}>← Back</Link>
       </div>
     )
   }
 
-  const { score, grade, points_awarded, feedback, new_streak, total_points } = data
+  const { video, response_text, input_type, score, breakdown, feedback, date } = data
+  const formattedDate = new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
     <div className="container page">
-      {/* Hero score section */}
-      <div className="feedback-hero">
-        <ScoreRing score={score} />
-        <div className={`grade-badge grade-${grade}`}>{grade}</div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 8 }}>
-          {GRADE_LABELS[grade] || 'Good work!'}
-        </h2>
-        <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>
-          Your scene description has been evaluated
-        </p>
+      <div className="section-label" style={{ marginBottom: '16px' }}>
+        {formattedDate} — {video?.title}
+      </div>
 
-        <div className="feedback-stats">
-          <div className="feedback-stat">
-            <span>⭐</span>
-            <span><strong>+{points_awarded}</strong> points earned</span>
+      {/* Score card */}
+      <div className="card result-card">
+        <div className={`input-badge${input_type === 'microphone' ? ' input-badge--mic' : ' input-badge--kb'}`}>
+          {input_type === 'microphone' ? 'via microphone' : 'via keyboard'}
+        </div>
+        <div className="user-response-box">{response_text}</div>
+        <div className="score-row">
+          <ScoreRing score={score} />
+          <div className="score-details">
+            <div className="score-label">Overall score</div>
+            <div className="score-display">
+              <span className="score-big">{score}</span>
+              <span className="score-denom">/ 10</span>
+            </div>
+            <div className="score-praise">
+              {score >= 9 ? 'Excellent!' : score >= 7 ? 'Great work!' : score >= 5 ? 'Good effort!' : 'Keep practicing!'}
+            </div>
           </div>
-          {new_streak != null && (
-            <div className="feedback-stat">
-              <span>🔥</span>
-              <span><strong>{new_streak}</strong> day streak</span>
+        </div>
+        {breakdown && (
+          <div className="breakdown-grid">
+            {[['grammar', 'Grammar'], ['vocabulary', 'Vocabulary'], ['clarity', 'Clarity']].map(([k, label]) => {
+              const v = breakdown[k]
+              const color = v >= 8 ? '#4ade80' : v >= 5 ? '#f59e0b' : '#f87171'
+              return (
+                <div key={k} className="breakdown-cell">
+                  <div className="breakdown-value" style={{ color }}>{v ?? '–'}</div>
+                  <div className="breakdown-label">{label}</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Sentences */}
+      <div className="card" style={{ marginTop: '12px' }}>
+        <div className="section-label" style={{ marginBottom: '14px' }}>Sentences</div>
+        <SentenceBlock label="Your response" text={response_text} accentColor="#888896" />
+        <SentenceBlock label="AI suggested" text={feedback?.ai_suggestion} accentColor="#7c6fef" />
+        <SentenceBlock label="Admin reference" text={video?.reference_description} accentColor="#e8ff47" />
+      </div>
+
+      {/* Suggestions */}
+      {(feedback?.vocab_notes?.length > 0 || feedback?.grammar_notes?.length > 0) && (
+        <div className="card" style={{ marginTop: '12px' }}>
+          <div className="section-label" style={{ marginBottom: '14px' }}>Suggestions</div>
+          {feedback.vocab_notes?.length > 0 && (
+            <div className="suggestions-section">
+              <div className="suggestions-sublabel">Better vocabulary</div>
+              <div className="chips-row">
+                {feedback.vocab_notes.map((n, i) => <span key={i} className="chip chip--vocab">{n}</span>)}
+              </div>
             </div>
           )}
-          {total_points != null && (
-            <div className="feedback-stat">
-              <span>🏆</span>
-              <span><strong>{total_points}</strong> total points</span>
+          {feedback.grammar_notes?.length > 0 && (
+            <div className="suggestions-section" style={{ marginTop: '12px' }}>
+              <div className="suggestions-sublabel">Grammar fixes</div>
+              <div className="chips-row">
+                {feedback.grammar_notes.map((n, i) => <span key={i} className="chip chip--grammar">{n}</span>)}
+              </div>
             </div>
           )}
         </div>
-      </div>
+      )}
 
-      <div className="feedback-sections">
-        {/* Strengths */}
-        {feedback.strengths?.length > 0 && (
-          <div className="feedback-section">
-            <div className="feedback-section-title" style={{ color: 'var(--success)' }}>
-              ✅ Strengths
+      {/* Corrections */}
+      {feedback?.corrections?.length > 0 && (
+        <div className="card" style={{ marginTop: '12px' }}>
+          <div className="section-label" style={{ marginBottom: '14px' }}>Corrections</div>
+          {feedback.corrections.map((c, i) => (
+            <div key={i} className="correction-item">
+              <div className="correction-original">✗ {c.original}</div>
+              <div className="correction-corrected">✓ {c.corrected}</div>
+              {c.explanation && <div className="correction-explanation">{c.explanation}</div>}
             </div>
-            <ul className="feedback-list">
-              {feedback.strengths.map((s, i) => (
-                <li key={i} data-icon="✓" style={{ color: 'var(--text-2)' }}>{s}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          ))}
+        </div>
+      )}
 
-        {/* Improvements */}
-        {feedback.improvements?.length > 0 && (
-          <div className="feedback-section">
-            <div className="feedback-section-title" style={{ color: 'var(--warning)' }}>
-              💡 Areas to Improve
-            </div>
-            <ul className="feedback-list">
-              {feedback.improvements.map((s, i) => (
-                <li key={i} data-icon="→" style={{ color: 'var(--text-2)' }}>{s}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Corrections */}
-        {feedback.corrections?.length > 0 && (
-          <div className="feedback-section">
-            <div className="feedback-section-title" style={{ color: 'var(--danger)' }}>
-              🔧 Corrections
-            </div>
-            {feedback.corrections.map((c, i) => (
-              <div className="correction-item" key={i}>
-                <div className="correction-original">✗ {c.original}</div>
-                <div className="correction-corrected">✓ {c.corrected}</div>
-                <div className="correction-explanation">{c.explanation}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Native rewrite */}
-        {feedback.native_rewrite && (
-          <div className="feedback-section">
-            <div className="feedback-section-title" style={{ color: 'var(--info)' }}>
-              🗣️ Native Speaker Rewrite
-            </div>
-            <div className="native-rewrite">
-              "{feedback.native_rewrite}"
-            </div>
-          </div>
-        )}
-
-        {/* Notes section */}
-        {feedback.notes && (
-          <div className="feedback-section notes-section">
-            <div className="feedback-section-title" style={{ color: 'var(--accent-light)' }}>
-              📝 Notes
-            </div>
-            <div className="notes-grid">
-              {feedback.notes.grammar?.length > 0 && (
-                <div className="notes-card">
-                  <div className="notes-card-title">Grammar</div>
-                  <ul className="feedback-list">
-                    {feedback.notes.grammar.map((n, i) => (
-                      <li key={i} data-icon="•" style={{ color: 'var(--text-2)' }}>{n}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {feedback.notes.vocabulary?.length > 0 && (
-                <div className="notes-card">
-                  <div className="notes-card-title">Vocabulary</div>
-                  <ul className="feedback-list">
-                    {feedback.notes.vocabulary.map((n, i) => (
-                      <li key={i} data-icon="•" style={{ color: 'var(--text-2)' }}>{n}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {feedback.notes.structure?.length > 0 && (
-                <div className="notes-card">
-                  <div className="notes-card-title">Sentence Structure</div>
-                  <ul className="feedback-list">
-                    {feedback.notes.structure.map((n, i) => (
-                      <li key={i} data-icon="•" style={{ color: 'var(--text-2)' }}>{n}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: '12px', marginTop: '28px', flexWrap: 'wrap' }}>
-        <Link to="/" className="btn btn-primary">
-          🏠 Back to Home
-        </Link>
-        <Link to="/profile" className="btn btn-secondary">
-          📊 View Profile
-        </Link>
+      <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
+        <Link to="/profile" className="btn-secondary">← Back to Profile</Link>
+        <Link to="/" className="btn-primary">Today's Scene</Link>
       </div>
     </div>
   )

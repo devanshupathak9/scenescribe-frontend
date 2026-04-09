@@ -13,12 +13,12 @@ export default function Login({ onLogin }) {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
+    if (e?.preventDefault) e.preventDefault()
     setLoading(true)
     setError('')
     try {
-      const data = await api.post('/auth/login', form)
-      onLogin(data.user, data.token)
+      const res = await api.post('/auth/login', form)
+      onLogin(res.data.user, res.data.token)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -80,7 +80,7 @@ export default function Login({ onLogin }) {
 
           {error && <div className="error-msg">{error}</div>}
 
-          <form onSubmit={handleSubmit}>
+          <div>
             <div className="form-group">
               <label className="form-label">Email</label>
               <div className="input-icon-wrap">
@@ -92,7 +92,7 @@ export default function Login({ onLogin }) {
                   placeholder="you@example.com"
                   value={form.email}
                   onChange={handleChange}
-                  required
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
                   autoFocus
                 />
               </div>
@@ -109,20 +109,21 @@ export default function Login({ onLogin }) {
                   placeholder="••••••••"
                   value={form.password}
                   onChange={handleChange}
-                  required
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
                 />
               </div>
             </div>
 
             <button
               className="btn btn-primary btn-full btn-lg"
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={loading}
               style={{ marginTop: 8 }}
             >
               {loading ? <><span className="spinner" /> Signing in…</> : 'Sign In →'}
             </button>
-          </form>
+          </div>
 
           <p className="auth-link">
             Don't have an account? <Link to="/register">Create one free</Link>
