@@ -22,6 +22,7 @@ export default function Register({ onLogin }) {
     setError('')
     try {
       const res = await api.post('/auth/register', { user_name: form.user_name, email: form.email, password: form.password })
+      if (!res.data?.user || !res.data?.token) throw new Error('Unexpected response from server')
       onLogin(res.data.user, res.data.token)
     } catch (err) {
       setError(err.message)

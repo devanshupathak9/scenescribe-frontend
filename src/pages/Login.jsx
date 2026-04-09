@@ -18,6 +18,7 @@ export default function Login({ onLogin }) {
     setError('')
     try {
       const res = await api.post('/auth/login', form)
+      if (!res.data?.user || !res.data?.token) throw new Error('Unexpected response from server')
       onLogin(res.data.user, res.data.token)
     } catch (err) {
       setError(err.message)

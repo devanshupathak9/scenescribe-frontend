@@ -4,10 +4,12 @@ function getToken() {
   return localStorage.getItem('token');
 }
 
+const PUBLIC_PATHS = ['/auth/login', '/auth/register'];
+
 async function request(method, path, body) {
   const headers = { 'Content-Type': 'application/json' };
   const token = getToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (token && !PUBLIC_PATHS.includes(path)) headers['Authorization'] = `Bearer ${token}`;
 
   const options = { method, headers };
   if (body !== undefined) options.body = JSON.stringify(body);
