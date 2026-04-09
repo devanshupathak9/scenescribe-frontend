@@ -253,7 +253,7 @@ export default function Home({ user }) {
                   <span className="score-big">{submission.score}</span>
                   <span className="score-denom">/ 10</span>
                 </div>
-                <div className="score-praise">
+                <div className="score-praise" style={{ color: submission.score >= 7 ? 'var(--success)' : submission.score >= 5 ? 'var(--warning)' : 'var(--danger)' }}>
                   {submission.score >= 9 ? 'Excellent!' : submission.score >= 7 ? 'Great work!' : submission.score >= 5 ? 'Good effort!' : 'Keep practicing!'}
                 </div>
               </div>

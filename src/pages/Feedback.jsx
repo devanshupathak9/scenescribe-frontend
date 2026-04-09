@@ -90,7 +90,7 @@ export default function Feedback() {
               <span className="score-big">{score}</span>
               <span className="score-denom">/ 10</span>
             </div>
-            <div className="score-praise">
+            <div className="score-praise" style={{ color: score >= 7 ? 'var(--success)' : score >= 5 ? 'var(--warning)' : 'var(--danger)' }}>
               {score >= 9 ? 'Excellent!' : score >= 7 ? 'Great work!' : score >= 5 ? 'Good effort!' : 'Keep practicing!'}
             </div>
           </div>

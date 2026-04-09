@@ -14,10 +14,10 @@ export default function Register({ onLogin }) {
 
   async function handleSubmit(e) {
     if (e?.preventDefault) e.preventDefault()
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
+    if (!form.user_name.trim()) { setError('Username is required'); return }
+    if (!form.email.trim()) { setError('Email is required'); return }
+    if (!form.password) { setError('Password is required'); return }
+    if (form.password.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
     setError('')
     try {
@@ -136,7 +136,7 @@ export default function Register({ onLogin }) {
             </div>
 
             <button
-              className="btn btn-primary btn-full btn-lg"
+              className="btn-primary btn-full btn-lg"
               type="button"
               onClick={handleSubmit}
               disabled={loading}

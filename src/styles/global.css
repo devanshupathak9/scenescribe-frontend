@@ -433,7 +433,6 @@ h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
 
 .score-praise {
   font-size: 12px;
-  color: var(--success);
   margin-top: 2px;
 }
 

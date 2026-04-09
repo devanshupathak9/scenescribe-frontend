@@ -14,6 +14,8 @@ export default function Login({ onLogin }) {
 
   async function handleSubmit(e) {
     if (e?.preventDefault) e.preventDefault()
+    if (!form.email.trim()) { setError('Email is required'); return }
+    if (!form.password) { setError('Password is required'); return }
     setLoading(true)
     setError('')
     try {
@@ -116,7 +118,7 @@ export default function Login({ onLogin }) {
             </div>
 
             <button
-              className="btn btn-primary btn-full btn-lg"
+              className="btn-primary btn-full btn-lg"
               type="button"
               onClick={handleSubmit}
               disabled={loading}
