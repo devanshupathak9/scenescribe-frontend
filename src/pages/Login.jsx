@@ -23,7 +23,12 @@ export default function Login({ onLogin }) {
       if (!res.data?.user || !res.data?.token) throw new Error('Unexpected response from server')
       onLogin(res.data.user, res.data.token)
     } catch (err) {
-      setError(err.message)
+      // Give a more actionable message for unverified accounts
+      if (err.message?.toLowerCase().includes('verify your email')) {
+        setError('Your email is not verified yet. Please complete registration first.')
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
     }

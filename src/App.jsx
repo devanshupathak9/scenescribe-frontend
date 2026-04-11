@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
-import Login from './pages/Login.jsx'
-import Register from './pages/Register.jsx'
+import AuthPage from './pages/AuthPage.jsx'
 import Home from './pages/Home.jsx'
 import Feedback from './pages/Feedback.jsx'
 import Profile from './pages/Profile.jsx'
@@ -46,8 +45,8 @@ export default function App() {
       {user && <Navbar user={user} onLogout={logout} />}
       <div className={user ? 'main-content' : ''}>
         <Routes>
-          <Route path="/login" element={user ? <Navigate to="/" /> : <Login onLogin={login} />} />
-          <Route path="/register" element={user ? <Navigate to="/" /> : <Register onLogin={login} />} />
+          <Route path="/login" element={user ? <Navigate to="/" /> : <AuthPage onLogin={login} initialTab="signin" />} />
+          <Route path="/register" element={user ? <Navigate to="/" /> : <AuthPage onLogin={login} initialTab="register" />} />
           <Route path="/" element={
             <PrivateRoute user={user}>
               <Home user={user} />

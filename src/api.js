@@ -1,7 +1,7 @@
 const BASE = '/api';
 
 // Never attach the auth token to these endpoints
-const PUBLIC_PATHS = ['/auth/login', '/auth/register'];
+const PUBLIC_PATHS = ['/auth/login', '/auth/register', '/auth/verify'];
 
 function getToken() {
   return localStorage.getItem('token');
