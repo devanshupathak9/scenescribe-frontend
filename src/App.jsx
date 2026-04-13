@@ -8,12 +8,12 @@ import Admin from './pages/Admin.jsx'
 import Navbar from './components/Navbar.jsx'
 
 function PrivateRoute({ user, children }) {
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/" replace />
   return children
 }
 
 function AdminRoute({ user, children }) {
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/" replace />
   if (!user.is_admin) return <Navigate to="/" replace />
   return children
 }
@@ -45,12 +45,18 @@ export default function App() {
       {user && <Navbar user={user} onLogout={logout} />}
       <div className={user ? 'main-content' : ''}>
         <Routes>
-          <Route path="/login" element={user ? <Navigate to="/" /> : <AuthPage onLogin={login} initialTab="signin" />} />
-          <Route path="/register" element={user ? <Navigate to="/" /> : <AuthPage onLogin={login} initialTab="register" />} />
+          {/* Root: auth page when logged out, dashboard when logged in */}
           <Route path="/" element={
-            <PrivateRoute user={user}>
-              <Home user={user} />
-            </PrivateRoute>
+            user
+              ? <Home user={user} />
+              : <AuthPage onLogin={login} initialTab="register" />
+          } />
+          {/* Convenience aliases that switch the active tab */}
+          <Route path="/login" element={
+            user ? <Navigate to="/" replace /> : <AuthPage onLogin={login} initialTab="signin" />
+          } />
+          <Route path="/register" element={
+            user ? <Navigate to="/" replace /> : <AuthPage onLogin={login} initialTab="register" />
           } />
           <Route path="/feedback/:id" element={
             <PrivateRoute user={user}>
