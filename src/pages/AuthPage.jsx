@@ -24,7 +24,7 @@ function IconEnvelope({ size = 14, color = 'white' }) {
 
 function IconPlay() {
   return (
-    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#e8ff47" strokeWidth="1.6" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="#e8ff47" strokeWidth="1.6" strokeLinejoin="round">
       <path d="M2.5 1.5l8 4.5-8 4.5V1.5z" />
     </svg>
   )
@@ -32,7 +32,7 @@ function IconPlay() {
 
 function IconTrend() {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#e8ff47" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="#e8ff47" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="1,9 4,5 7,7 11,2" />
       <polyline points="8,2 11,2 11,5" />
     </svg>
@@ -41,7 +41,7 @@ function IconTrend() {
 
 function IconClock() {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#e8ff47" strokeWidth="1.5" strokeLinecap="round">
+    <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="#e8ff47" strokeWidth="1.5" strokeLinecap="round">
       <circle cx="6" cy="6" r="5" />
       <polyline points="6,3 6,6 8.5,7.5" />
     </svg>
@@ -50,7 +50,7 @@ function IconClock() {
 
 function IconCheck() {
   return (
-    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="#4ade80" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="38" height="38" viewBox="0 0 30 30" fill="none" stroke="#4ade80" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="5,15 12,22 25,8" />
     </svg>
   )
@@ -68,7 +68,7 @@ function LeftPanel() {
         {/* Brand */}
         <div className="ap-brand">
           <div className="ap-brand-icon">
-            <IconEnvelope size={14} color="white" />
+            <IconEnvelope size={18} color="white" />
           </div>
           <span className="ap-brand-name">
             <span className="ap-scene">Scene</span><span className="ap-scribe">Scribe</span>
@@ -359,7 +359,7 @@ export default function AuthPage({ onLogin, initialTab = 'register' }) {
 
               <div className="ap-envelope-block">
                 <div className="ap-envelope-icon">
-                  <IconEnvelope size={26} color="#e8ff47" />
+                  <IconEnvelope size={32} color="#e8ff47" />
                 </div>
                 <p className="ap-sent-to">
                   We sent a 6-digit code to<br />
