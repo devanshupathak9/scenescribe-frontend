@@ -290,10 +290,12 @@ h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
   border: none;
 }
 .video-block--small {
-  aspect-ratio: unset;
-  height: 140px;
+  /* Keep the 16/9 ratio so the video renders properly — just cap the width
+     so it sits as a compact preview rather than a full-bleed player. */
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
 }
-.video-block--small iframe { height: 140px; }
 
 .video-placeholder {
   display: flex;
@@ -1461,9 +1463,36 @@ h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
 
   .nav-pill span:not(:last-child) { display: none; }
 
-  /* ap-* auth page responsive */
-  .ap-page { grid-template-columns: 1fr; }
-  .ap-left { display: none; }
-  .ap-right { padding: 28px 20px; align-items: flex-start; padding-top: 40px; }
+  /* ap-* auth page responsive — stack panels vertically */
+  .ap-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Show left panel as a compact brand strip at the top */
+  .ap-left {
+    display: flex;
+    padding: 28px 24px 24px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .ap-left-inner { max-width: 100%; }
+
+  /* Scale down elements that appear in the compact strip */
+  .ap-brand       { margin-bottom: 16px; }
+  .ap-brand-icon  { width: 32px; height: 32px; }
+  .ap-brand-name  { font-size: 17px; }
+  .ap-badge       { margin-bottom: 14px; font-size: 10px; padding: 4px 10px; }
+  .ap-headline    { font-size: 26px; margin-bottom: 0; }
+
+  /* Hide heavy blocks that don't fit a compact strip */
+  .ap-body-copy   { display: none; }
+  .ap-testimonial { display: none; }
+  .ap-features    { display: none; }
+
+  /* Right panel — form sits directly below the brand strip */
+  .ap-right { padding: 28px 20px 44px; align-items: flex-start; }
+
+  /* OTP boxes slightly smaller on narrow screens */
   .ap-otp-box { width: 44px; height: 54px; font-size: 20px; }
 }
