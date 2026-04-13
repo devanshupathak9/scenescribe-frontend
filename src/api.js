@@ -1,4 +1,7 @@
-const BASE = '/api';
+// In development the Vite proxy rewrites /api → VITE_API_URL (see vite.config.js).
+// In production (Vercel) there is no proxy, so VITE_API_BASE_URL must be set to
+// the full backend origin + /api  e.g. https://your-backend.railway.app/api
+const BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Never attach the auth token to these endpoints
 const PUBLIC_PATHS = ['/auth/login', '/auth/register', '/auth/verify'];
