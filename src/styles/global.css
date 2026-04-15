@@ -539,6 +539,17 @@ h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
 .correction-corrected { color: var(--success); margin-bottom: 4px; }
 .correction-explanation { color: var(--muted); font-size: 12px; }
 
+.difficulty-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: capitalize;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+
 .feedback-list {
   list-style: none;
   padding: 0;
@@ -555,6 +566,20 @@ h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
   color: var(--text);
   line-height: 1.5;
   border-left: 3px solid var(--yellow);
+}
+.feedback-item--issue      { border-left-color: #f87171; }
+.feedback-item--suggestion { border-left-color: #7c6fef; }
+
+.schedule-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+.schedule-difficulty {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: capitalize;
+  margin-top: 2px;
 }
 
 /* ── Profile Page ───────────────────────────────────────────────── */

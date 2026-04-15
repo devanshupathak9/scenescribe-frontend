@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api.js'
 
+const DIFFICULTIES = ['beginner', 'intermediate', 'advanced']
+
 const EMPTY_FORM = {
   date: new Date().toISOString().split('T')[0],
+  title: '',
   video_url: '',
-  scene_description: '',
-  reference_description: '',
+  description: '',
+  difficulty: 'intermediate',
   additional_notes: '',
   is_premium: false,
 }
@@ -24,9 +27,7 @@ export default function Admin() {
   const [editId, setEditId] = useState(null)
   const [editForm, setEditForm] = useState({})
 
-  useEffect(() => {
-    loadSchedule()
-  }, [])
+  useEffect(() => { loadSchedule() }, [])
 
   async function loadSchedule() {
     try {
@@ -45,8 +46,8 @@ export default function Admin() {
   }
 
   async function handleSchedule() {
-    if (!form.date || !form.video_url) {
-      setSaveError('Date and YouTube URL are required.')
+    if (!form.date || !form.video_url || !form.title || !form.description) {
+      setSaveError('Date, YouTube URL, title, and description are required.')
       return
     }
     setSaving(true)
@@ -54,12 +55,13 @@ export default function Admin() {
     setSaveSuccess('')
     try {
       await api.post('/admin/schedule', {
-        date: form.date,
-        video_url: form.video_url,
-        scene_description: form.scene_description || null,
-        reference_description: form.reference_description || null,
+        date:             form.date,
+        video_url:        form.video_url,
+        title:            form.title,
+        description:      form.description,
+        difficulty:       form.difficulty,
         additional_notes: form.additional_notes || null,
-        is_premium: form.is_premium,
+        is_premium:       form.is_premium,
       })
       setSaveSuccess('Video scheduled successfully!')
       setForm({ ...EMPTY_FORM })
@@ -84,9 +86,10 @@ export default function Admin() {
   function startEdit(item) {
     setEditId(item.video_id)
     setEditForm({
-      video_url: item.video_url || '',
-      scene_description: item.scene_description || '',
-      reference_description: item.reference_description || '',
+      title:            item.title            || '',
+      video_url:        item.video_url        || '',
+      description:      item.description      || '',
+      difficulty:       item.difficulty       || 'intermediate',
       additional_notes: item.additional_notes || '',
     })
   }
@@ -103,18 +106,23 @@ export default function Admin() {
 
   return (
     <div className="container page">
-      {/* Navbar label override is handled in Navbar */}
 
-      {/* Schedule Form */}
+      {/* ── Schedule Form ─────────────────────────────────────── */}
       <div className="card" style={{ marginBottom: '24px' }}>
         <div className="section-label" style={{ marginBottom: '16px' }}>Schedule a video</div>
 
-        {saveError && <div className="error-msg" style={{ marginBottom: '12px' }}>{saveError}</div>}
+        {saveError   && <div className="error-msg"   style={{ marginBottom: '12px' }}>{saveError}</div>}
         {saveSuccess && <div className="success-msg" style={{ marginBottom: '12px' }}>✓ {saveSuccess}</div>}
 
         <div className="form-field">
           <label className="field-label">Date</label>
           <input className="field-input" type="date" name="date" value={form.date} onChange={handleFormChange} />
+        </div>
+
+        <div className="form-field">
+          <label className="field-label">Title</label>
+          <input className="field-input" type="text" name="title" value={form.title}
+            onChange={handleFormChange} placeholder="e.g. Man ordering coffee at a café" />
         </div>
 
         <div className="form-field">
@@ -124,22 +132,25 @@ export default function Admin() {
         </div>
 
         <div className="form-field">
-          <label className="field-label">Scene description (reference sentence)</label>
-          <textarea className="field-input" name="scene_description" value={form.scene_description}
-            onChange={handleFormChange} rows={2} placeholder="Brief description of the scene…" />
-        </div>
-
-        <div className="form-field">
-          <label className="field-label">Reference answer (ideal description for AI scoring)</label>
-          <textarea className="field-input" name="reference_description" value={form.reference_description}
+          <label className="field-label">Admin sentence <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(reference description — used for AI scoring)</span></label>
+          <textarea className="field-input" name="description" value={form.description}
             onChange={handleFormChange} rows={3}
-            placeholder="Write an ideal description. The AI will compare student submissions against this…" />
+            placeholder="Write the ideal description of the scene. The AI will compare student submissions against this…" />
         </div>
 
         <div className="form-field">
-          <label className="field-label">Notes (grammar / vocabulary hints) <span style={{ color: 'var(--text-muted)' }}>optional</span></label>
+          <label className="field-label">Difficulty</label>
+          <select className="field-input" name="difficulty" value={form.difficulty} onChange={handleFormChange}>
+            {DIFFICULTIES.map(d => (
+              <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-field">
+          <label className="field-label">Notes <span style={{ color: 'var(--muted)', fontWeight: 400 }}>optional</span></label>
           <textarea className="field-input" name="additional_notes" value={form.additional_notes}
-            onChange={handleFormChange} rows={2} placeholder="Optional tips for learners…" />
+            onChange={handleFormChange} rows={2} placeholder="Grammar tips, vocabulary hints for learners…" />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
@@ -150,7 +161,7 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Upcoming Schedule */}
+      {/* ── Upcoming Schedule ─────────────────────────────────── */}
       <div className="section-label" style={{ marginBottom: '14px' }}>Upcoming schedule</div>
 
       {scheduled.length === 0 && (
@@ -174,12 +185,29 @@ export default function Admin() {
 
               {isEditing ? (
                 <div className="schedule-edit" style={{ flex: 1, minWidth: 0 }}>
-                  <input className="field-input" style={{ marginBottom: '6px' }} value={editForm.video_url}
+                  <input className="field-input" style={{ marginBottom: '6px' }}
+                    value={editForm.title}
+                    onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                    placeholder="Title" />
+                  <input className="field-input" style={{ marginBottom: '6px' }}
+                    value={editForm.video_url}
                     onChange={e => setEditForm(f => ({ ...f, video_url: e.target.value }))}
                     placeholder="YouTube URL" />
-                  <textarea className="field-input" rows={2} value={editForm.scene_description}
-                    onChange={e => setEditForm(f => ({ ...f, scene_description: e.target.value }))}
-                    placeholder="Scene description" style={{ marginBottom: '6px' }} />
+                  <textarea className="field-input" rows={2} style={{ marginBottom: '6px' }}
+                    value={editForm.description}
+                    onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="Admin sentence (reference description)" />
+                  <select className="field-input" style={{ marginBottom: '6px' }}
+                    value={editForm.difficulty}
+                    onChange={e => setEditForm(f => ({ ...f, difficulty: e.target.value }))}>
+                    {DIFFICULTIES.map(d => (
+                      <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                    ))}
+                  </select>
+                  <textarea className="field-input" rows={2} style={{ marginBottom: '6px' }}
+                    value={editForm.additional_notes}
+                    onChange={e => setEditForm(f => ({ ...f, additional_notes: e.target.value }))}
+                    placeholder="Notes (optional)" />
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <button className="btn-primary" style={{ width: 'auto', padding: '5px 14px', fontSize: '12px' }}
                       onClick={() => saveEdit(item.video_id)}>Save</button>
@@ -189,8 +217,10 @@ export default function Admin() {
                 </div>
               ) : (
                 <div className="schedule-meta">
-                  <div className="schedule-desc">{item.scene_description || item.title || 'No description'}</div>
+                  <div className="schedule-title">{item.title || 'Untitled'}</div>
+                  <div className="schedule-desc">{item.description}</div>
                   <div className="schedule-url">{item.video_url}</div>
+                  <div className="schedule-difficulty">{item.difficulty}</div>
                 </div>
               )}
 

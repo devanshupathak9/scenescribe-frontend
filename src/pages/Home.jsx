@@ -11,29 +11,18 @@ function getYouTubeEmbedUrl(url) {
 }
 
 function ScoreRing({ score }) {
-  const r = 28
-  const cx = 36
-  const cy = 36
+  const r = 28, cx = 36, cy = 36
   const circumference = 2 * Math.PI * r
   const offset = circumference * (1 - score / 10)
   return (
     <svg width="72" height="72" style={{ transform: 'rotate(-90deg)' }}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
-      <circle
-        cx={cx} cy={cy} r={r} fill="none"
-        stroke="#e8ff47" strokeWidth="6"
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-      />
-      <text
-        x={cx} y={cy + 1}
-        textAnchor="middle" dominantBaseline="middle"
-        fill="#f0f0f0"
-        fontSize="20" fontFamily="Syne" fontWeight="700"
-        style={{ transform: 'rotate(90deg)', transformOrigin: `${cx}px ${cy}px` }}
-      >
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e8ff47" strokeWidth="6"
+        strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle"
+        fill="#f0f0f0" fontSize="20" fontFamily="Syne" fontWeight="700"
+        style={{ transform: 'rotate(90deg)', transformOrigin: `${cx}px ${cy}px` }}>
         {score}
       </text>
     </svg>
@@ -60,11 +49,17 @@ function SentenceBlock({ label, text, accentColor }) {
   )
 }
 
+const DIFFICULTY_COLORS = {
+  beginner:     '#4ade80',
+  intermediate: '#f59e0b',
+  advanced:     '#f87171',
+}
+
 export default function Home({ user }) {
-  const [data, setData] = useState(null)          // full API response data
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [text, setText] = useState('')
+  const [data, setData]           = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState('')
+  const [text, setText]           = useState('')
   const [inputType, setInputType] = useState('keyboard')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -93,19 +88,13 @@ export default function Home({ user }) {
     recognition.onresult = (e) => {
       let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finalTranscript += e.results[i][0].transcript + ' '
-        } else {
-          interim += e.results[i][0].transcript
-        }
+        if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' '
+        else interim += e.results[i][0].transcript
       }
       setText(finalTranscript + interim)
     }
     recognition.onerror = () => setIsRecording(false)
-    recognition.onend = () => {
-      setText(finalTranscript.trim())
-      setIsRecording(false)
-    }
+    recognition.onend   = () => { setText(finalTranscript.trim()); setIsRecording(false) }
     recognition.start()
     setIsRecording(true)
     setInputType('microphone')
@@ -130,14 +119,10 @@ export default function Home({ user }) {
         response_text: text.trim(),
         input_type: inputType,
       })
-      // Update local state with submission result
       setData(prev => ({
         ...prev,
         status: 'submitted',
-        submission: {
-          ...res.data,
-          response_text: text.trim(),
-        },
+        submission: { ...res.data, response_text: text.trim() },
       }))
     } catch (err) {
       setSubmitError(err.message)
@@ -147,12 +132,7 @@ export default function Home({ user }) {
   }
 
   if (loading) {
-    return (
-      <div className="loading-state">
-        <span className="spinner" />
-        Loading today's scene…
-      </div>
-    )
+    return <div className="loading-state"><span className="spinner" />Loading today's scene…</div>
   }
 
   if (error) {
@@ -168,47 +148,47 @@ export default function Home({ user }) {
   }
 
   const { status, video, submission } = data
-  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const today    = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
   const embedUrl = getYouTubeEmbedUrl(video.video_url)
+  const diffColor = DIFFICULTY_COLORS[video.difficulty] || '#888'
 
   return (
     <div className="container page">
-      <div className="section-label">Today's Scene — {today}</div>
-
-      {/* Video Block */}
-      <div className={`video-block${status === 'submitted' ? ' video-block--small' : ''}`}>
-        {embedUrl ? (
-          <iframe
-            src={embedUrl}
-            title={video.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <div className="video-placeholder">No video available</div>
+      <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        Today's Scene — {today}
+        {video.difficulty && (
+          <span className="difficulty-badge" style={{ background: diffColor + '22', color: diffColor, borderColor: diffColor + '55' }}>
+            {video.difficulty}
+          </span>
         )}
+      </div>
+
+      {/* Video */}
+      <div className={`video-block${status === 'submitted' ? ' video-block--small' : ''}`}>
+        {embedUrl
+          ? <iframe src={embedUrl} title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen />
+          : <div className="video-placeholder">No video available</div>
+        }
         {video.video_url && (
           <div className="video-url-badge">{video.video_url.replace('https://', '')}</div>
         )}
       </div>
 
-      {/* BEFORE SUBMISSION */}
+      {/* ── BEFORE SUBMISSION ─────────────────────────────────── */}
       {status === 'pending' && (
         <div className="card input-card">
           <div className="section-label" style={{ marginBottom: '10px' }}>Your description</div>
           <div className="input-row">
-            <textarea
-              className="desc-textarea"
+            <textarea className="desc-textarea"
               placeholder="Describe what's happening in the video…"
               value={text}
               onChange={e => { setText(e.target.value); setInputType('keyboard'); setSubmitError('') }}
-              rows={4}
-            />
-            <button
-              className={`mic-btn${isRecording ? ' mic-btn--active' : ''}`}
+              rows={4} />
+            <button className={`mic-btn${isRecording ? ' mic-btn--active' : ''}`}
               onClick={isRecording ? stopRecording : startRecording}
-              title={isRecording ? 'Stop recording' : 'Voice input'}
-            >
+              title={isRecording ? 'Stop recording' : 'Voice input'}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -219,32 +199,24 @@ export default function Home({ user }) {
           </div>
           {isRecording && <div className="recording-indicator">● Listening…</div>}
           {submitError && <div className="error-msg">{submitError}</div>}
-          <button
-            className="btn-primary btn-full"
-            onClick={handleSubmit}
-            disabled={submitting || text.trim().length < 10}
-          >
+          <button className="btn-primary btn-full" onClick={handleSubmit}
+            disabled={submitting || text.trim().length < 10}>
             {submitting ? <><span className="spinner" /> Analysing with AI…</> : 'Submit description'}
           </button>
         </div>
       )}
 
-      {/* AFTER SUBMISSION */}
+      {/* ── AFTER SUBMISSION ──────────────────────────────────── */}
       {status === 'submitted' && submission && (
         <>
-          {/* Response + Score Card */}
+          {/* 1 · User sentence + scores */}
           <div className="card result-card">
-            {/* Input type badge */}
             <div className={`input-badge${submission.input_type === 'microphone' ? ' input-badge--mic' : ' input-badge--kb'}`}>
               {submission.input_type === 'microphone' ? 'via microphone' : 'via keyboard'}
             </div>
 
-            {/* User's response */}
-            <div className="user-response-box">
-              {submission.response_text}
-            </div>
+            <div className="user-response-box">{submission.response_text}</div>
 
-            {/* Score row */}
             <div className="score-row">
               <ScoreRing score={submission.score} />
               <div className="score-details">
@@ -259,35 +231,51 @@ export default function Home({ user }) {
               </div>
             </div>
 
-            {/* Score breakdown */}
             {submission.breakdown && (
               <div className="breakdown-grid">
-                <ScoreCell value={submission.breakdown.grammar} label="Grammar" />
+                <ScoreCell value={submission.breakdown.grammar}    label="Grammar"    />
                 <ScoreCell value={submission.breakdown.vocabulary} label="Vocabulary" />
-                <ScoreCell value={submission.breakdown.clarity} label="Clarity" />
+                <ScoreCell value={submission.breakdown.clarity}    label="Clarity"    />
               </div>
             )}
           </div>
 
-          {/* Sentences Card */}
+          {/* 2 · AI feedback */}
           <div className="card" style={{ marginTop: '12px' }}>
-            <div className="section-label" style={{ marginBottom: '14px' }}>Sentences</div>
-            <SentenceBlock label="Your response" text={submission.response_text} accentColor="#888896" />
-            <SentenceBlock label="AI improved" text={submission.ai_response} accentColor="#7c6fef" />
-            <SentenceBlock label="Admin reference" text={video.reference_description} accentColor="#e8ff47" />
+            <div className="section-label" style={{ marginBottom: '14px' }}>AI Feedback</div>
+
+            <SentenceBlock label="Improved sentence" text={submission.improved_ai_response} accentColor="#7c6fef" />
+            <SentenceBlock label="Ideal sentence"    text={submission.ideal_sentence}       accentColor="#e8ff47" />
+
+            {submission.feedback?.issues?.length > 0 && (
+              <div style={{ marginTop: '14px' }}>
+                <div className="suggestions-sublabel">Issues</div>
+                <ul className="feedback-list" style={{ marginTop: '8px' }}>
+                  {submission.feedback.issues.map((item, i) => (
+                    <li key={i} className="feedback-item feedback-item--issue">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {submission.feedback?.suggestions?.length > 0 && (
+              <div style={{ marginTop: '14px' }}>
+                <div className="suggestions-sublabel">Suggestions</div>
+                <ul className="feedback-list" style={{ marginTop: '8px' }}>
+                  {submission.feedback.suggestions.map((item, i) => (
+                    <li key={i} className="feedback-item feedback-item--suggestion">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
-          {/* Feedback */}
-          {submission.feedback?.length > 0 && (
-            <div className="card" style={{ marginTop: '12px' }}>
-              <div className="section-label" style={{ marginBottom: '14px' }}>Feedback</div>
-              <ul className="feedback-list">
-                {submission.feedback.map((note, i) => (
-                  <li key={i} className="feedback-item">{note}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* 3 · Admin section */}
+          <div className="card" style={{ marginTop: '12px' }}>
+            <div className="section-label" style={{ marginBottom: '14px' }}>Admin</div>
+            <SentenceBlock label="Admin sentence" text={video.description}      accentColor="#888896" />
+            <SentenceBlock label="Notes"          text={video.additional_notes} accentColor="#555566" />
+          </div>
         </>
       )}
     </div>
