@@ -12,7 +12,7 @@ export default function Navbar({ user, onLogout }) {
     <nav className="navbar">
       <div className="navbar-inner">
         <NavLink to="/" className="navbar-logo">
-          <span className="logo-scene">Scene</span><span className="logo-scribe">Scribe</span>
+          <span className="logo-scene">Scene</span><span className="logo-scribe">scribe</span>
           {user?.is_admin && <span className="admin-badge">Admin</span>}
         </NavLink>
 

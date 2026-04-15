@@ -67,7 +67,7 @@ export default function Feedback() {
     )
   }
 
-  const { video, response_text, input_type, score, breakdown, feedback, date } = data
+  const { video, response_text, input_type, score, breakdown, feedback, ai_response, date } = data
   const formattedDate = new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
@@ -115,44 +115,17 @@ export default function Feedback() {
       <div className="card" style={{ marginTop: '12px' }}>
         <div className="section-label" style={{ marginBottom: '14px' }}>Sentences</div>
         <SentenceBlock label="Your response" text={response_text} accentColor="#888896" />
-        <SentenceBlock label="AI suggested" text={feedback?.ai_suggestion} accentColor="#7c6fef" />
+        <SentenceBlock label="AI improved" text={ai_response} accentColor="#7c6fef" />
         <SentenceBlock label="Admin reference" text={video?.reference_description} accentColor="#e8ff47" />
       </div>
 
-      {/* Suggestions */}
-      {(feedback?.vocab_notes?.length > 0 || feedback?.grammar_notes?.length > 0) && (
+      {/* Feedback */}
+      {feedback?.length > 0 && (
         <div className="card" style={{ marginTop: '12px' }}>
-          <div className="section-label" style={{ marginBottom: '14px' }}>Suggestions</div>
-          {feedback.vocab_notes?.length > 0 && (
-            <div className="suggestions-section">
-              <div className="suggestions-sublabel">Better vocabulary</div>
-              <div className="chips-row">
-                {feedback.vocab_notes.map((n, i) => <span key={i} className="chip chip--vocab">{n}</span>)}
-              </div>
-            </div>
-          )}
-          {feedback.grammar_notes?.length > 0 && (
-            <div className="suggestions-section" style={{ marginTop: '12px' }}>
-              <div className="suggestions-sublabel">Grammar fixes</div>
-              <div className="chips-row">
-                {feedback.grammar_notes.map((n, i) => <span key={i} className="chip chip--grammar">{n}</span>)}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Corrections */}
-      {feedback?.corrections?.length > 0 && (
-        <div className="card" style={{ marginTop: '12px' }}>
-          <div className="section-label" style={{ marginBottom: '14px' }}>Corrections</div>
-          {feedback.corrections.map((c, i) => (
-            <div key={i} className="correction-item">
-              <div className="correction-original">✗ {c.original}</div>
-              <div className="correction-corrected">✓ {c.corrected}</div>
-              {c.explanation && <div className="correction-explanation">{c.explanation}</div>}
-            </div>
-          ))}
+          <div className="section-label" style={{ marginBottom: '14px' }}>Feedback</div>
+          <ul className="feedback-list">
+            {feedback.map((note, i) => <li key={i} className="feedback-item">{note}</li>)}
+          </ul>
         </div>
       )}
 

@@ -160,8 +160,8 @@ export default function Home({ user }) {
       <div className="container page">
         <div className="empty-state">
           <div className="empty-icon">🎬</div>
-          <h3>No scene available today</h3>
-          <p>{error}</p>
+          <h3>No scene scheduled for today.</h3>
+          <p>Check back tomorrow — new content drops daily.</p>
         </div>
       </div>
     )
@@ -273,50 +273,19 @@ export default function Home({ user }) {
           <div className="card" style={{ marginTop: '12px' }}>
             <div className="section-label" style={{ marginBottom: '14px' }}>Sentences</div>
             <SentenceBlock label="Your response" text={submission.response_text} accentColor="#888896" />
-            <SentenceBlock label="AI suggested" text={submission.feedback?.ai_suggestion} accentColor="#7c6fef" />
+            <SentenceBlock label="AI improved" text={submission.ai_response} accentColor="#7c6fef" />
             <SentenceBlock label="Admin reference" text={video.reference_description} accentColor="#e8ff47" />
           </div>
 
-          {/* Suggestions Card */}
-          {(submission.feedback?.vocab_notes?.length > 0 || submission.feedback?.grammar_notes?.length > 0) && (
+          {/* Feedback */}
+          {submission.feedback?.length > 0 && (
             <div className="card" style={{ marginTop: '12px' }}>
-              <div className="section-label" style={{ marginBottom: '14px' }}>Suggestions</div>
-
-              {submission.feedback.vocab_notes?.length > 0 && (
-                <div className="suggestions-section">
-                  <div className="suggestions-sublabel">Better vocabulary</div>
-                  <div className="chips-row">
-                    {submission.feedback.vocab_notes.map((note, i) => (
-                      <span key={i} className="chip chip--vocab">{note}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {submission.feedback.grammar_notes?.length > 0 && (
-                <div className="suggestions-section" style={{ marginTop: '12px' }}>
-                  <div className="suggestions-sublabel">Grammar fixes</div>
-                  <div className="chips-row">
-                    {submission.feedback.grammar_notes.map((note, i) => (
-                      <span key={i} className="chip chip--grammar">{note}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Corrections */}
-          {submission.feedback?.corrections?.length > 0 && (
-            <div className="card" style={{ marginTop: '12px' }}>
-              <div className="section-label" style={{ marginBottom: '14px' }}>Corrections</div>
-              {submission.feedback.corrections.map((c, i) => (
-                <div key={i} className="correction-item">
-                  <div className="correction-original">✗ {c.original}</div>
-                  <div className="correction-corrected">✓ {c.corrected}</div>
-                  {c.explanation && <div className="correction-explanation">{c.explanation}</div>}
-                </div>
-              ))}
+              <div className="section-label" style={{ marginBottom: '14px' }}>Feedback</div>
+              <ul className="feedback-list">
+                {submission.feedback.map((note, i) => (
+                  <li key={i} className="feedback-item">{note}</li>
+                ))}
+              </ul>
             </div>
           )}
         </>
