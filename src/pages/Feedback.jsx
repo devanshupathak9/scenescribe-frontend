@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../api.js'
 
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/)
+  if (!match) return null
+  return `https://www.youtube.com/embed/${match[1]}?rel=0`
+}
+
 function ScoreRing({ score }) {
   const r = 28, cx = 36, cy = 36
   const circumference = 2 * Math.PI * r
@@ -63,91 +70,111 @@ export default function Feedback() {
   } = data
 
   const formattedDate = new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const embedUrl = getYouTubeEmbedUrl(video?.video_url)
 
   return (
-    <div className="container page">
-      <div className="section-label" style={{ marginBottom: '16px' }}>
+    <div className="container container--wide page">
+      <div className="section-label" style={{ marginBottom: '12px' }}>
         {formattedDate} — {video?.title}
       </div>
 
-      {/* 1 · User sentence + scores */}
-      <div className="card result-card">
-        <div className={`input-badge${input_type === 'microphone' ? ' input-badge--mic' : ' input-badge--kb'}`}>
-          {input_type === 'microphone' ? 'via microphone' : 'via keyboard'}
-        </div>
+      <div className="submission-split">
 
-        <div className="user-response-box">{response_text}</div>
-
-        <div className="score-row">
-          <ScoreRing score={score} />
-          <div className="score-details">
-            <div className="score-label">Overall score</div>
-            <div className="score-display">
-              <span className="score-big">{score}</span>
-              <span className="score-denom">/ 10</span>
-            </div>
-            <div className="score-praise" style={{ color: score >= 7 ? 'var(--success)' : score >= 5 ? 'var(--warning)' : 'var(--danger)' }}>
-              {score >= 9 ? 'Excellent!' : score >= 7 ? 'Great work!' : score >= 5 ? 'Good effort!' : 'Keep practicing!'}
-            </div>
+        {/* LEFT — video + user result */}
+        <div className="submission-left">
+          <div className="video-block">
+            {embedUrl
+              ? <iframe src={embedUrl} title={video?.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen />
+              : <div className="video-placeholder">No video available</div>
+            }
+            {video?.video_url && (
+              <div className="video-url-badge">{video.video_url.replace('https://', '')}</div>
+            )}
           </div>
-        </div>
 
-        {breakdown && (
-          <div className="breakdown-grid">
-            {[['grammar', 'Grammar'], ['vocabulary', 'Vocabulary'], ['clarity', 'Clarity']].map(([k, label]) => {
-              const v = breakdown[k]
-              const color = v >= 8 ? '#4ade80' : v >= 5 ? '#f59e0b' : '#f87171'
-              return (
-                <div key={k} className="breakdown-cell">
-                  <div className="breakdown-value" style={{ color }}>{v ?? '–'}</div>
-                  <div className="breakdown-label">{label}</div>
+          <div className="card result-card">
+            <div className={`input-badge${input_type === 'microphone' ? ' input-badge--mic' : ' input-badge--kb'}`}>
+              {input_type === 'microphone' ? 'via microphone' : 'via keyboard'}
+            </div>
+
+            <div className="user-response-box">{response_text}</div>
+
+            <div className="score-row">
+              <ScoreRing score={score} />
+              <div className="score-details">
+                <div className="score-label">Overall score</div>
+                <div className="score-display">
+                  <span className="score-big">{score}</span>
+                  <span className="score-denom">/ 10</span>
                 </div>
-              )
-            })}
+                <div className="score-praise" style={{ color: score >= 7 ? 'var(--success)' : score >= 5 ? 'var(--warning)' : 'var(--danger)' }}>
+                  {score >= 9 ? 'Excellent!' : score >= 7 ? 'Great work!' : score >= 5 ? 'Good effort!' : 'Keep practicing!'}
+                </div>
+              </div>
+            </div>
+
+            {breakdown && (
+              <div className="breakdown-grid">
+                {[['grammar', 'Grammar'], ['vocabulary', 'Vocabulary'], ['clarity', 'Clarity']].map(([k, label]) => {
+                  const v = breakdown[k]
+                  const color = v >= 8 ? '#4ade80' : v >= 5 ? '#f59e0b' : '#f87171'
+                  return (
+                    <div key={k} className="breakdown-cell">
+                      <div className="breakdown-value" style={{ color }}>{v ?? '–'}</div>
+                      <div className="breakdown-label">{label}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* 2 · AI feedback */}
-      <div className="card" style={{ marginTop: '12px' }}>
-        <div className="section-label" style={{ marginBottom: '14px' }}>AI Feedback</div>
-
-        <SentenceBlock label="Improved sentence" text={improved_ai_response} accentColor="#7c6fef" />
-        <SentenceBlock label="Ideal sentence"    text={ideal_sentence}       accentColor="#e8ff47" />
-
-        {feedback?.issues?.length > 0 && (
-          <div style={{ marginTop: '14px' }}>
-            <div className="suggestions-sublabel">Issues</div>
-            <ul className="feedback-list" style={{ marginTop: '8px' }}>
-              {feedback.issues.map((item, i) => (
-                <li key={i} className="feedback-item feedback-item--issue">{item}</li>
-              ))}
-            </ul>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <Link to="/profile" className="btn-secondary">← Back to Profile</Link>
+            <Link to="/" className="btn-primary">Today's Scene</Link>
           </div>
-        )}
+        </div>
 
-        {feedback?.suggestions?.length > 0 && (
-          <div style={{ marginTop: '14px' }}>
-            <div className="suggestions-sublabel">Suggestions</div>
-            <ul className="feedback-list" style={{ marginTop: '8px' }}>
-              {feedback.suggestions.map((item, i) => (
-                <li key={i} className="feedback-item feedback-item--suggestion">{item}</li>
-              ))}
-            </ul>
+        {/* RIGHT — AI feedback + Admin */}
+        <div className="submission-right">
+          <div className="card">
+            <div className="section-label" style={{ marginBottom: '14px' }}>AI Feedback</div>
+
+            <SentenceBlock label="Improved sentence" text={improved_ai_response} accentColor="#7c6fef" />
+            <SentenceBlock label="Ideal sentence"    text={ideal_sentence}       accentColor="#e8ff47" />
+
+            {feedback?.issues?.length > 0 && (
+              <div style={{ marginTop: '14px' }}>
+                <div className="suggestions-sublabel">Issues</div>
+                <ul className="feedback-list" style={{ marginTop: '8px' }}>
+                  {feedback.issues.map((item, i) => (
+                    <li key={i} className="feedback-item feedback-item--issue">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {feedback?.suggestions?.length > 0 && (
+              <div style={{ marginTop: '14px' }}>
+                <div className="suggestions-sublabel">Suggestions</div>
+                <ul className="feedback-list" style={{ marginTop: '8px' }}>
+                  {feedback.suggestions.map((item, i) => (
+                    <li key={i} className="feedback-item feedback-item--suggestion">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* 3 · Admin section */}
-      <div className="card" style={{ marginTop: '12px' }}>
-        <div className="section-label" style={{ marginBottom: '14px' }}>Admin</div>
-        <SentenceBlock label="Admin sentence" text={video?.description}      accentColor="#888896" />
-        <SentenceBlock label="Notes"          text={video?.additional_notes} accentColor="#555566" />
-      </div>
+          <div className="card">
+            <div className="section-label" style={{ marginBottom: '14px' }}>Admin</div>
+            <SentenceBlock label="Admin sentence" text={video?.description}      accentColor="#888896" />
+            <SentenceBlock label="Notes"          text={video?.additional_notes} accentColor="#555566" />
+          </div>
+        </div>
 
-      <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-        <Link to="/profile" className="btn-secondary">← Back to Profile</Link>
-        <Link to="/" className="btn-primary">Today's Scene</Link>
       </div>
     </div>
   )

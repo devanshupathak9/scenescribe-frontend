@@ -153,8 +153,8 @@ export default function Home({ user }) {
   const diffColor = DIFFICULTY_COLORS[video.difficulty] || '#888'
 
   return (
-    <div className="container page">
-      <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div className={`container${status === 'submitted' ? ' container--wide' : ''} page`}>
+      <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
         Today's Scene — {today}
         {video.difficulty && (
           <span className="difficulty-badge" style={{ background: diffColor + '22', color: diffColor, borderColor: diffColor + '55' }}>
@@ -163,120 +163,138 @@ export default function Home({ user }) {
         )}
       </div>
 
-      {/* Video */}
-      <div className={`video-block${status === 'submitted' ? ' video-block--small' : ''}`}>
-        {embedUrl
-          ? <iframe src={embedUrl} title={video.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen />
-          : <div className="video-placeholder">No video available</div>
-        }
-        {video.video_url && (
-          <div className="video-url-badge">{video.video_url.replace('https://', '')}</div>
-        )}
-      </div>
-
       {/* ── BEFORE SUBMISSION ─────────────────────────────────── */}
       {status === 'pending' && (
-        <div className="card input-card">
-          <div className="section-label" style={{ marginBottom: '10px' }}>Your description</div>
-          <div className="input-row">
-            <textarea className="desc-textarea"
-              placeholder="Describe what's happening in the video…"
-              value={text}
-              onChange={e => { setText(e.target.value); setInputType('keyboard'); setSubmitError('') }}
-              rows={4} />
-            <button className={`mic-btn${isRecording ? ' mic-btn--active' : ''}`}
-              onClick={isRecording ? stopRecording : startRecording}
-              title={isRecording ? 'Stop recording' : 'Voice input'}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
+        <>
+          <div className="video-block">
+            {embedUrl
+              ? <iframe src={embedUrl} title={video.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen />
+              : <div className="video-placeholder">No video available</div>
+            }
+            {video.video_url && (
+              <div className="video-url-badge">{video.video_url.replace('https://', '')}</div>
+            )}
+          </div>
+
+          <div className="card input-card">
+            <div className="section-label" style={{ marginBottom: '10px' }}>Your description</div>
+            <div className="input-row">
+              <textarea className="desc-textarea"
+                placeholder="Describe what's happening in the video…"
+                value={text}
+                onChange={e => { setText(e.target.value); setInputType('keyboard'); setSubmitError('') }}
+                rows={4} />
+              <button className={`mic-btn${isRecording ? ' mic-btn--active' : ''}`}
+                onClick={isRecording ? stopRecording : startRecording}
+                title={isRecording ? 'Stop recording' : 'Voice input'}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </button>
+            </div>
+            {isRecording && <div className="recording-indicator">● Listening…</div>}
+            {submitError && <div className="error-msg">{submitError}</div>}
+            <button className="btn-primary btn-full" onClick={handleSubmit}
+              disabled={submitting || text.trim().length < 10}>
+              {submitting ? <><span className="spinner" /> Analysing with AI…</> : 'Submit description'}
             </button>
           </div>
-          {isRecording && <div className="recording-indicator">● Listening…</div>}
-          {submitError && <div className="error-msg">{submitError}</div>}
-          <button className="btn-primary btn-full" onClick={handleSubmit}
-            disabled={submitting || text.trim().length < 10}>
-            {submitting ? <><span className="spinner" /> Analysing with AI…</> : 'Submit description'}
-          </button>
-        </div>
+        </>
       )}
 
-      {/* ── AFTER SUBMISSION ──────────────────────────────────── */}
+      {/* ── AFTER SUBMISSION: split layout ────────────────────── */}
       {status === 'submitted' && submission && (
-        <>
-          {/* 1 · User sentence + scores */}
-          <div className="card result-card">
-            <div className={`input-badge${submission.input_type === 'microphone' ? ' input-badge--mic' : ' input-badge--kb'}`}>
-              {submission.input_type === 'microphone' ? 'via microphone' : 'via keyboard'}
+        <div className="submission-split">
+
+          {/* LEFT — video + user result */}
+          <div className="submission-left">
+            <div className="video-block">
+              {embedUrl
+                ? <iframe src={embedUrl} title={video.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen />
+                : <div className="video-placeholder">No video available</div>
+              }
+              {video.video_url && (
+                <div className="video-url-badge">{video.video_url.replace('https://', '')}</div>
+              )}
             </div>
 
-            <div className="user-response-box">{submission.response_text}</div>
+            <div className="card result-card">
+              <div className={`input-badge${submission.input_type === 'microphone' ? ' input-badge--mic' : ' input-badge--kb'}`}>
+                {submission.input_type === 'microphone' ? 'via microphone' : 'via keyboard'}
+              </div>
 
-            <div className="score-row">
-              <ScoreRing score={submission.score} />
-              <div className="score-details">
-                <div className="score-label">Overall score</div>
-                <div className="score-display">
-                  <span className="score-big">{submission.score}</span>
-                  <span className="score-denom">/ 10</span>
-                </div>
-                <div className="score-praise" style={{ color: submission.score >= 7 ? 'var(--success)' : submission.score >= 5 ? 'var(--warning)' : 'var(--danger)' }}>
-                  {submission.score >= 9 ? 'Excellent!' : submission.score >= 7 ? 'Great work!' : submission.score >= 5 ? 'Good effort!' : 'Keep practicing!'}
+              <div className="user-response-box">{submission.response_text}</div>
+
+              <div className="score-row">
+                <ScoreRing score={submission.score} />
+                <div className="score-details">
+                  <div className="score-label">Overall score</div>
+                  <div className="score-display">
+                    <span className="score-big">{submission.score}</span>
+                    <span className="score-denom">/ 10</span>
+                  </div>
+                  <div className="score-praise" style={{ color: submission.score >= 7 ? 'var(--success)' : submission.score >= 5 ? 'var(--warning)' : 'var(--danger)' }}>
+                    {submission.score >= 9 ? 'Excellent!' : submission.score >= 7 ? 'Great work!' : submission.score >= 5 ? 'Good effort!' : 'Keep practicing!'}
+                  </div>
                 </div>
               </div>
+
+              {submission.breakdown && (
+                <div className="breakdown-grid">
+                  <ScoreCell value={submission.breakdown.grammar}    label="Grammar"    />
+                  <ScoreCell value={submission.breakdown.vocabulary} label="Vocabulary" />
+                  <ScoreCell value={submission.breakdown.clarity}    label="Clarity"    />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT — AI feedback + Admin */}
+          <div className="submission-right">
+            <div className="card">
+              <div className="section-label" style={{ marginBottom: '14px' }}>AI Feedback</div>
+
+              <SentenceBlock label="Improved sentence" text={submission.improved_ai_response} accentColor="#7c6fef" />
+              <SentenceBlock label="Ideal sentence"    text={submission.ideal_sentence}       accentColor="#e8ff47" />
+
+              {submission.feedback?.issues?.length > 0 && (
+                <div style={{ marginTop: '14px' }}>
+                  <div className="suggestions-sublabel">Issues</div>
+                  <ul className="feedback-list" style={{ marginTop: '8px' }}>
+                    {submission.feedback.issues.map((item, i) => (
+                      <li key={i} className="feedback-item feedback-item--issue">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {submission.feedback?.suggestions?.length > 0 && (
+                <div style={{ marginTop: '14px' }}>
+                  <div className="suggestions-sublabel">Suggestions</div>
+                  <ul className="feedback-list" style={{ marginTop: '8px' }}>
+                    {submission.feedback.suggestions.map((item, i) => (
+                      <li key={i} className="feedback-item feedback-item--suggestion">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            {submission.breakdown && (
-              <div className="breakdown-grid">
-                <ScoreCell value={submission.breakdown.grammar}    label="Grammar"    />
-                <ScoreCell value={submission.breakdown.vocabulary} label="Vocabulary" />
-                <ScoreCell value={submission.breakdown.clarity}    label="Clarity"    />
-              </div>
-            )}
+            <div className="card">
+              <div className="section-label" style={{ marginBottom: '14px' }}>Admin</div>
+              <SentenceBlock label="Admin sentence" text={video.description}      accentColor="#888896" />
+              <SentenceBlock label="Notes"          text={video.additional_notes} accentColor="#555566" />
+            </div>
           </div>
 
-          {/* 2 · AI feedback */}
-          <div className="card" style={{ marginTop: '12px' }}>
-            <div className="section-label" style={{ marginBottom: '14px' }}>AI Feedback</div>
-
-            <SentenceBlock label="Improved sentence" text={submission.improved_ai_response} accentColor="#7c6fef" />
-            <SentenceBlock label="Ideal sentence"    text={submission.ideal_sentence}       accentColor="#e8ff47" />
-
-            {submission.feedback?.issues?.length > 0 && (
-              <div style={{ marginTop: '14px' }}>
-                <div className="suggestions-sublabel">Issues</div>
-                <ul className="feedback-list" style={{ marginTop: '8px' }}>
-                  {submission.feedback.issues.map((item, i) => (
-                    <li key={i} className="feedback-item feedback-item--issue">{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {submission.feedback?.suggestions?.length > 0 && (
-              <div style={{ marginTop: '14px' }}>
-                <div className="suggestions-sublabel">Suggestions</div>
-                <ul className="feedback-list" style={{ marginTop: '8px' }}>
-                  {submission.feedback.suggestions.map((item, i) => (
-                    <li key={i} className="feedback-item feedback-item--suggestion">{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* 3 · Admin section */}
-          <div className="card" style={{ marginTop: '12px' }}>
-            <div className="section-label" style={{ marginBottom: '14px' }}>Admin</div>
-            <SentenceBlock label="Admin sentence" text={video.description}      accentColor="#888896" />
-            <SentenceBlock label="Notes"          text={video.additional_notes} accentColor="#555566" />
-          </div>
-        </>
+        </div>
       )}
     </div>
   )

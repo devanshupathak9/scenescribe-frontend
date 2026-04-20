@@ -1488,6 +1488,27 @@ h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
   max-width: 340px;
 }
 
+/* ── Submission Split Layout ─────────────────────────────────────── */
+.container--wide { max-width: 1080px; }
+
+.submission-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.submission-left,
+.submission-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .submission-split { grid-template-columns: 1fr; }
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .auth-page { grid-template-columns: 1fr; }
