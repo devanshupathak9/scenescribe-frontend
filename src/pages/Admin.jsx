@@ -15,17 +15,21 @@ const EMPTY_FORM = {
 
 function formatDay(dateStr) {
   const d = new Date(dateStr + 'T12:00:00')
-  return { day: d.getDate(), month: d.toLocaleString('en-US', { month: 'short' }) }
+  return {
+    day:   d.getDate(),
+    month: d.toLocaleString('en-US', { month: 'short' }),
+    full:  d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }),
+  }
 }
 
 export default function Admin() {
-  const [form, setForm] = useState({ ...EMPTY_FORM })
+  const [form, setForm]           = useState({ ...EMPTY_FORM })
   const [scheduled, setScheduled] = useState([])
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving]       = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState('')
-  const [editId, setEditId] = useState(null)
-  const [editForm, setEditForm] = useState({})
+  const [editId, setEditId]       = useState(null)
+  const [editForm, setEditForm]   = useState({})
 
   useEffect(() => { loadSchedule() }, [])
 
@@ -63,7 +67,7 @@ export default function Admin() {
         additional_notes: form.additional_notes || null,
         is_premium:       form.is_premium,
       })
-      setSaveSuccess('Video scheduled successfully!')
+      setSaveSuccess('Scene scheduled successfully!')
       setForm({ ...EMPTY_FORM })
       await loadSchedule()
     } catch (err) {
@@ -74,7 +78,7 @@ export default function Admin() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Delete this scheduled video? This cannot be undone.')) return
+    if (!confirm('Delete this scene? This cannot be undone.')) return
     try {
       await api.delete(`/admin/schedule/${id}`)
       setScheduled(prev => prev.filter(s => s.video_id !== id))
@@ -104,18 +108,26 @@ export default function Admin() {
     }
   }
 
+  // Group scenes by date for display
+  const grouped = scheduled.reduce((acc, item) => {
+    if (!acc[item.date]) acc[item.date] = []
+    acc[item.date].push(item)
+    return acc
+  }, {})
+  const sortedDates = Object.keys(grouped).sort()
+
   return (
     <div className="container page">
 
-      {/* ── Schedule Form ─────────────────────────────────────── */}
+      {/* ── Schedule Form ─────────────────────────────────────────────── */}
       <div className="card" style={{ marginBottom: '24px' }}>
-        <div className="section-label" style={{ marginBottom: '16px' }}>Schedule a video</div>
+        <div className="section-label" style={{ marginBottom: '16px' }}>Schedule a scene</div>
 
         {saveError   && <div className="error-msg"   style={{ marginBottom: '12px' }}>{saveError}</div>}
         {saveSuccess && <div className="success-msg" style={{ marginBottom: '12px' }}>✓ {saveSuccess}</div>}
 
         <div className="form-field">
-          <label className="field-label">Date</label>
+          <label className="field-label">Date <span style={{ color: 'var(--muted)', fontWeight: 400 }}>— up to 4 scenes per day</span></label>
           <input className="field-input" type="date" name="date" value={form.date} onChange={handleFormChange} />
         </div>
 
@@ -132,7 +144,9 @@ export default function Admin() {
         </div>
 
         <div className="form-field">
-          <label className="field-label">Admin sentence <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(reference description — used for AI scoring)</span></label>
+          <label className="field-label">
+            Admin sentence <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(reference description — used for AI scoring)</span>
+          </label>
           <textarea className="field-input" name="description" value={form.description}
             onChange={handleFormChange} rows={3}
             placeholder="Write the ideal description of the scene. The AI will compare student submissions against this…" />
@@ -156,80 +170,100 @@ export default function Admin() {
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
           <button className="btn-primary" style={{ width: 'auto', padding: '10px 20px' }}
             onClick={handleSchedule} disabled={saving}>
-            {saving ? <><span className="spinner" /> Saving…</> : '+ Schedule video'}
+            {saving ? <><span className="spinner" /> Saving…</> : '+ Add scene'}
           </button>
         </div>
       </div>
 
-      {/* ── Upcoming Schedule ─────────────────────────────────── */}
+      {/* ── Upcoming Schedule (grouped by date) ───────────────────────── */}
       <div className="section-label" style={{ marginBottom: '14px' }}>Upcoming schedule</div>
 
-      {scheduled.length === 0 && (
+      {sortedDates.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">📅</div>
-          <h3>No videos scheduled</h3>
-          <p>Use the form above to schedule your first video.</p>
+          <h3>No scenes scheduled</h3>
+          <p>Use the form above to schedule your first scene.</p>
         </div>
       )}
 
       <div className="schedule-list">
-        {scheduled.map(item => {
-          const { day, month } = formatDay(item.date)
-          const isEditing = editId === item.video_id
+        {sortedDates.map(date => {
+          const dayScenes = grouped[date]
+          const { day, month, full } = formatDay(date)
           return (
-            <div key={item.video_id} className="schedule-row">
-              <div className="date-badge">
-                <div className="date-day">{day}</div>
-                <div className="date-month">{month}</div>
-              </div>
-
-              {isEditing ? (
-                <div className="schedule-edit" style={{ flex: 1, minWidth: 0 }}>
-                  <input className="field-input" style={{ marginBottom: '6px' }}
-                    value={editForm.title}
-                    onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-                    placeholder="Title" />
-                  <input className="field-input" style={{ marginBottom: '6px' }}
-                    value={editForm.video_url}
-                    onChange={e => setEditForm(f => ({ ...f, video_url: e.target.value }))}
-                    placeholder="YouTube URL" />
-                  <textarea className="field-input" rows={2} style={{ marginBottom: '6px' }}
-                    value={editForm.description}
-                    onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="Admin sentence (reference description)" />
-                  <select className="field-input" style={{ marginBottom: '6px' }}
-                    value={editForm.difficulty}
-                    onChange={e => setEditForm(f => ({ ...f, difficulty: e.target.value }))}>
-                    {DIFFICULTIES.map(d => (
-                      <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
-                    ))}
-                  </select>
-                  <textarea className="field-input" rows={2} style={{ marginBottom: '6px' }}
-                    value={editForm.additional_notes}
-                    onChange={e => setEditForm(f => ({ ...f, additional_notes: e.target.value }))}
-                    placeholder="Notes (optional)" />
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button className="btn-primary" style={{ width: 'auto', padding: '5px 14px', fontSize: '12px' }}
-                      onClick={() => saveEdit(item.video_id)}>Save</button>
-                    <button className="btn-ghost" style={{ padding: '5px 14px', fontSize: '12px' }}
-                      onClick={() => setEditId(null)}>Cancel</button>
+            <div key={date} className="date-group">
+              {/* Date group header */}
+              <div className="date-group-header">
+                <div className="date-badge">
+                  <div className="date-day">{day}</div>
+                  <div className="date-month">{month}</div>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{full}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
+                    {dayScenes.length} scene{dayScenes.length !== 1 ? 's' : ''} scheduled
                   </div>
                 </div>
-              ) : (
-                <div className="schedule-meta">
-                  <div className="schedule-title">{item.title || 'Untitled'}</div>
-                  <div className="schedule-desc">{item.description}</div>
-                  <div className="schedule-url">{item.video_url}</div>
-                  <div className="schedule-difficulty">{item.difficulty}</div>
-                </div>
-              )}
+                <div className="scene-count-badge">{dayScenes.length} / 4</div>
+              </div>
 
-              {!isEditing && (
-                <div className="schedule-actions">
-                  <button className="action-btn" onClick={() => startEdit(item)}>Edit</button>
-                  <button className="action-btn action-btn--del" onClick={() => handleDelete(item.video_id)}>Del</button>
-                </div>
-              )}
+              {/* Scenes for this date */}
+              {dayScenes.map((item, sceneIdx) => {
+                const isEditing = editId === item.video_id
+                return (
+                  <div key={item.video_id} className="schedule-row schedule-row--nested">
+                    <div className="scene-number">#{sceneIdx + 1}</div>
+
+                    {isEditing ? (
+                      <div className="schedule-edit" style={{ flex: 1, minWidth: 0 }}>
+                        <input className="field-input" style={{ marginBottom: '6px' }}
+                          value={editForm.title}
+                          onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                          placeholder="Title" />
+                        <input className="field-input" style={{ marginBottom: '6px' }}
+                          value={editForm.video_url}
+                          onChange={e => setEditForm(f => ({ ...f, video_url: e.target.value }))}
+                          placeholder="YouTube URL" />
+                        <textarea className="field-input" rows={2} style={{ marginBottom: '6px' }}
+                          value={editForm.description}
+                          onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                          placeholder="Admin sentence" />
+                        <select className="field-input" style={{ marginBottom: '6px' }}
+                          value={editForm.difficulty}
+                          onChange={e => setEditForm(f => ({ ...f, difficulty: e.target.value }))}>
+                          {DIFFICULTIES.map(d => (
+                            <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                          ))}
+                        </select>
+                        <textarea className="field-input" rows={2} style={{ marginBottom: '6px' }}
+                          value={editForm.additional_notes}
+                          onChange={e => setEditForm(f => ({ ...f, additional_notes: e.target.value }))}
+                          placeholder="Notes (optional)" />
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button className="btn-primary" style={{ width: 'auto', padding: '5px 14px', fontSize: '12px' }}
+                            onClick={() => saveEdit(item.video_id)}>Save</button>
+                          <button className="btn-ghost" style={{ padding: '5px 14px', fontSize: '12px' }}
+                            onClick={() => setEditId(null)}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="schedule-meta">
+                        <div className="schedule-title">{item.title || 'Untitled'}</div>
+                        <div className="schedule-desc">{item.description}</div>
+                        <div className="schedule-url">{item.video_url}</div>
+                        <div className="schedule-difficulty">{item.difficulty}</div>
+                      </div>
+                    )}
+
+                    {!isEditing && (
+                      <div className="schedule-actions">
+                        <button className="action-btn" onClick={() => startEdit(item)}>Edit</button>
+                        <button className="action-btn action-btn--del" onClick={() => handleDelete(item.video_id)}>Del</button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )
         })}
