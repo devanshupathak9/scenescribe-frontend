@@ -1522,8 +1522,8 @@ h1, h2, h3, .syne { font-family: 'Syne', sans-serif; }
 }
 
 .carousel-slide {
-  min-width: 100%;
-  flex: 0 0 100%;
+  flex-shrink: 0;
+  /* width is set via inline style: 100% / scenes.length */
 }
 
 .carousel-slide-inner {

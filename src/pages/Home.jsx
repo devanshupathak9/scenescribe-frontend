@@ -209,10 +209,12 @@ export default function Home({ user }) {
     return sceneInputs[videoId] || { text: '', inputType: 'keyboard', submitting: false, submitError: '', isRecording: false }
   }
 
+  const DEFAULT_INPUT = { text: '', inputType: 'keyboard', submitting: false, submitError: '', isRecording: false }
+
   function setInput(videoId, updates) {
     setSceneInputs(prev => ({
       ...prev,
-      [videoId]: { ...getInput(videoId), ...prev[videoId], ...updates },
+      [videoId]: { ...(prev[videoId] || DEFAULT_INPUT), ...updates },
     }))
   }
 
@@ -384,9 +386,15 @@ export default function Home({ user }) {
       <div className="carousel-wrapper">
         <div
           className="carousel-track"
-          style={{ transform: `translateX(-${currentIdx * 100}%)` }}>
+          style={{
+            width: `${scenes.length * 100}%`,
+            transform: `translateX(-${currentIdx * (100 / scenes.length)}%)`,
+          }}>
           {scenes.map((sceneItem, idx) => (
-            <div key={sceneItem.video.video_id} className="carousel-slide">
+            <div
+              key={sceneItem.video.video_id}
+              className="carousel-slide"
+              style={{ width: `${100 / scenes.length}%` }}>
               <SceneSlide
                 sceneItem={sceneItem}
                 sceneIdx={idx}
