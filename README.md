@@ -1,117 +1,96 @@
-# 🎬📝 SceneScribe — Client Platforms
+# 🎬📝 SceneScribe
 
-Client applications for **SceneScribe**, an AI-powered English learning app.
+**Learn English by describing what you see.**
 
-Every day a learner watches a short YouTube clip, describes what's happening in English — typed or spoken — and gets instant AI feedback: grammar, vocabulary and clarity scores, an overall score out of 10, specific issues and suggestions, their own sentence corrected, and an "ideal" example sentence to learn from. Streaks and submission history are tracked per learner.
+Most people learn English by memorising rules. SceneScribe flips that around: you watch a short, real-life video clip, describe what's happening in your own words, and get instant, personal feedback on how you said it.
 
-This repository holds the **client apps only**. The API, database and AI scoring live in a separate repository:
-
-> **Backend:** [`devanshupathak9/scenescribe-backend`](https://github.com/devanshupathak9/scenescribe-backend)
+It takes about five minutes a day.
 
 ---
 
-## 📂 Repository layout
+## 🌟 How it works
 
-| Path | What it is | Status |
-|---|---|---|
-| [`web/`](./web) | React + Vite single-page app. The production web client. | ✅ Active |
-| `android/` | Placeholder for the future native Android app. | 🚧 Not started |
+**1. Watch** — A short clip appears each day. Someone ordering coffee. A traveller checking in at an airport. Everyday moments, not textbook dialogues.
 
-Everything for the web app — `package.json`, `src/`, `vite.config.js`, `vercel.json`, its own `README` and `.env.example` — lives **inside `web/`**. There is no build at the repository root.
+**2. Describe** — Write a sentence or a short paragraph about what's happening. Type it, or just say it out loud and let SceneScribe transcribe your voice as you speak.
 
-```
-scenescribe/
-├── web/                  # React SPA (see web/README.md)
-│   ├── src/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── vercel.json       # SPA rewrite — all routes → index.html
-├── android/              # empty placeholder
-├── .gitignore
-└── README.md             # you are here
-```
+**3. Get scored** — Your description is reviewed and scored out of 10, broken down into three things that matter: **grammar**, **vocabulary**, and **clarity**.
+
+**4. Learn** — This is the part that makes it stick. You get back:
+
+- The specific issues in what you wrote — not vague advice
+- Practical suggestions you can act on next time
+- **Your own sentence, corrected** — so you can see exactly what changed
+- An **ideal example** showing the best way to describe that scene
+
+You get one attempt per scene. That's deliberate — it encourages a considered first try instead of guessing until something works.
 
 ---
 
-## 🚀 Quick start (web)
+## ✨ Features
 
-```bash
-cd web
-npm install
-cp .env.example .env      # then point VITE_API_URL at your backend
-npm run dev               # http://localhost:5173
-```
+### 📅 A fresh scene every day
+New clips are published daily. Some days bring more than one — up to four separate scenes, each tracked on its own. Do one now, come back for the rest later.
 
-The backend must be running separately (default `http://localhost:3001`). In development Vite proxies `/api` to whatever `VITE_API_URL` is set to, so there are no CORS issues locally.
+### 🎚️ Difficulty levels
+Every scene is labelled **beginner**, **intermediate**, or **advanced**, so you know what you're walking into before you start.
 
-| Command | What it does |
+### 📚 Built-in learning aids
+Scenes can come with help before you write a word:
+
+- **Key vocabulary** — useful words for the scene, each with a definition, part of speech, and an example
+- **Grammar focus** — a pattern worth practising here, like the present continuous or modal verbs, explained with examples
+- **Notes** — extra hints pointing you toward what to pay attention to
+
+### 🎙️ Type it or say it
+Write your description, or tap the microphone and speak naturally — your words appear as you talk. Both are scored exactly the same way.
+
+### 🔥 Streaks
+Practise on consecutive days and build a streak. SceneScribe tracks your **current streak** and your **longest ever**, so there's always a personal best to chase. Miss a day and the current streak resets — the record stays.
+
+### 📊 Your progress
+A profile that shows your average score, your highest score ever, both streaks, and how many scenes you've completed in total.
+
+### 🕘 Full history
+Every scene you've ever done, newest first. Tap any one to see the complete feedback again — what you wrote, your scores, the issues, the suggestions, the correction, and the ideal answer. Old feedback never disappears, so you can always go back and re-study.
+
+### 🎬 Curated content
+Scenes are hand-picked and scheduled by the SceneScribe team, each with its own reference description. Feedback is graded against what the content creator actually intended you to notice — not a generic rubric.
+
+---
+
+## 🚪 Getting started
+
+1. Enter your email address — a 6-digit verification code arrives, valid for 10 minutes
+2. Enter the code, then pick a username and password
+3. That's it. You stay signed in for a week at a time
+
+---
+
+## 📱 Where you can use it
+
+| Platform | Status |
 |---|---|
-| `npm run dev` | Dev server on `:5173` with hot reload |
-| `npm run build` | Production build into `web/dist/` |
-| `npm run preview` | Serve the built output locally |
-
-There is no test suite or linter configured — verification is manual against a running backend.
+| **Web** | ✅ Available |
+| **Android** | 🚧 In progress — the same daily practice, built natively |
 
 ---
 
-## 🔑 Environment
+## 🛣️ What's next
 
-One variable, set in `web/.env` (and in the Vercel dashboard for deploys):
+SceneScribe is actively being built. Planned additions:
 
-| Variable | Value |
+- The native **Android app**
+- **Premium scenes** — additional curated content beyond the daily free clip
+- More learning aids, more scene variety, and deeper progress insights
+
+New features get added here as they land.
+
+---
+
+## 📂 Inside this repository
+
+| Folder | What's in it |
 |---|---|
-| `VITE_API_URL` | Backend **origin only** — no trailing slash, no `/api` suffix |
-
-```bash
-# Local
-VITE_API_URL=http://localhost:3001
-
-# Production
-VITE_API_URL=https://your-backend.up.railway.app
-```
-
-`web/src/api.js` appends `/api` itself, so adding it here would produce `/api/api/...`. Vite only exposes variables prefixed with `VITE_` to client code, and the value is **baked into the bundle at build time** — changing it in Vercel requires a redeploy, not just a restart.
-
----
-
-## ▲ Deploying the web app (Vercel)
-
-Because the app is not at the repository root, the Vercel project must be pointed at the subdirectory:
-
-| Setting | Value |
-|---|---|
-| **Root Directory** | `web` |
-| Framework Preset | Vite |
-| Build Command | `npm run build` *(default)* |
-| Output Directory | `dist` *(default)* |
-| Install Command | `npm install` *(default)* |
-| Environment Variable | `VITE_API_URL` = your deployed backend origin |
-
-With the root directory set to `web`, Vercel picks up `web/vercel.json`, whose rewrite sends every path to `index.html` — required for client-side routing, otherwise deep links like `/profile` and `/feedback/:id` 404 on refresh.
-
----
-
-## 🧭 App routes
-
-| Route | Screen | Access |
-|---|---|---|
-| `/` | Auth page when signed out, daily dashboard when signed in | Public / private |
-| `/login`, `/register` | Same auth page with that tab preselected | Public |
-| `/profile` | Stats, streaks and submission history | Signed in |
-| `/feedback/:id` | Full feedback detail for a past submission | Signed in |
-| `/admin` | Scene scheduling and platform analytics | Admin only |
-
-Auth is a JWT held in `localStorage`; a `401` from any endpoint clears it and drops the user back to the auth page.
-
----
-
-## ⚛️ Tech stack
-
-- **React 18** with **Vite 6**
-- **React Router 6** for routing
-- Plain **CSS** — one global stylesheet with CSS-variable design tokens
-- **Web Speech API** for voice input (Chrome/Edge)
-- REST integration with the SceneScribe backend
-
-See [`web/README.md`](./web/README.md) for the detailed frontend breakdown.
+| [`web/`](./web) | The web app — see [`web/README.md`](./web/README.md) for the technical details |
+| `android/` | The native Android app (not started yet) |
