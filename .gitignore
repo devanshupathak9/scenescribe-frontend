@@ -1,0 +1,57 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build output ──────────────────────────────────────────────────────────────
+dist/
+dist-ssr/
+build/
+*.local
+
+# ── Environment ───────────────────────────────────────────────────────────────
+# Never commit real secrets. .env.example files ARE tracked on purpose.
+.env
+.env.*
+!.env.example
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Caches ────────────────────────────────────────────────────────────────────
+.vite/
+.cache/
+.eslintcache
+.npm
+
+# ── Deploy ────────────────────────────────────────────────────────────────────
+.vercel
+
+# ── Editors ───────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Android (placeholder — expand when the native app starts) ─────────────────
+android/build/
+android/.gradle/
+android/local.properties
+*.apk
+*.aab
+*.keystore
+!android/.gitkeep

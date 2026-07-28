@@ -1,5 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Environment — .env.example is tracked on purpose
+.env
+.env.*
+!.env.example
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,15 +20,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Caches
+.vite/
+.eslintcache
+
+# Deploy
+.vercel
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,7 +38,8 @@ dist-ssr
 *.sln
 *.sw?
 
-node_modules/
-package-lock.json
-.env
+# Agent instructions (kept local)
 CLAUDE.md
+
+# NOTE: package-lock.json is intentionally NOT ignored — Vercel needs it
+# committed for reproducible installs.
