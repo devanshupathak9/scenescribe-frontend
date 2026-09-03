@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: scenescribe
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/scenescribe
+      TZ: UTC
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
