@@ -30,6 +30,10 @@ lerna-debug.log*
 .eslintcache
 .npm
 
+# ── Runtime uploads ───────────────────────────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # ── Deploy ────────────────────────────────────────────────────────────────────
 .vercel
 
