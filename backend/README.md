@@ -2,7 +2,37 @@
 
 SceneScribe is an AI-powered English learning platform. Users watch short real-life video scenes, describe what they see in English, and receive instant AI-generated feedback with scores, grammar tips, vocabulary suggestions, and corrections.
 
-**Stack:** Node.js 22 · Express 4 · Sequelize 6 · PostgreSQL 16 · Anthropic Claude API · JWT · Nodemailer · Docker
+**Stack:** Node.js 22 · Express 4 · Sequelize 6 · PostgreSQL 16 · OpenAI GPT-4o · JWT · Nodemailer · Docker
+
+---
+
+## Running it
+
+```bash
+# This service plus its own Postgres
+docker compose up --build
+
+# Or the whole stack, including the web app, from the repo root
+cd .. && docker compose up --build
+
+# Or against a Postgres you already have
+npm install && cp .env.example .env && npm run dev
+```
+
+### Environment
+
+| Variable | Required | Notes |
+|---|---|---|
+| `DATABASE_URL` | yes | Postgres connection string |
+| `JWT_SECRET` | yes | Signs login tokens. `jwt.sign()` throws if unset, so `/auth/login` and `/auth/verify` return 500 without it |
+| `OPENAI_API_KEY` | no | Without it, every submission falls back to a fixed score of 6 rather than failing |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | no | Without them, the 6-digit OTP is printed to the server console instead of emailed |
+| `DATABASE_SSL` | no | Overrides SSL auto-detection (see below) |
+| `PORT` | no | Defaults to `3001` |
+
+**Postgres SSL.** Hosted databases (Railway, Neon, Supabase) require SSL; a local or containerised Postgres does not support it and rejects the handshake with *"The server does not support SSL connections"*. `config/database.js` therefore picks a default from the hostname in `DATABASE_URL` — off for `localhost`, `127.0.0.1`, `::1`, `db` and `postgres`, on for anything else. Set `DATABASE_SSL=true|false` to override.
+
+**Timezone.** `process.env.TZ` is forced to `UTC` at the top of `src/index.js`, and both compose files set `TZ`/`PGTZ` to match, so the `DATEONLY` "today" comparisons in `dashboard.js` behave the same regardless of host timezone.
 
 ---
 

@@ -1,0 +1,72 @@
+# Full local stack: Postgres + API + web app.
+#   docker compose up --build
+#
+# Runs with no configuration. Copy .env.example to .env to add an OpenAI key
+# (real AI scoring) or SMTP settings (real OTP emails) — see .env.example.
+
+name: scenescribe
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: scenescribe
+      # The API compares DATEONLY values to decide "today"; keep the DB in UTC too.
+      TZ: UTC
+      PGTZ: UTC
+    # Not published to the host: nothing outside the compose network needs it,
+    # and binding 5432 collides with backend/docker-compose.yml or a local
+    # Postgres. For a shell: docker compose exec db psql -U postgres scenescribe
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - '${API_PORT:-3001}:3001'
+    environment:
+      TZ: UTC
+      DATABASE_URL: postgres://postgres:password@db:5432/scenescribe
+      # jwt.sign() throws if this is unset, so it always needs a value.
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret}
+      # Unset is fine: scoring falls back to a fixed placeholder score.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Unset is fine: OTPs are printed to this service's logs instead of emailed.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-5173}:5173'
+    environment:
+      # VITE_API_URL is deliberately NOT set. Unset, the client calls a relative
+      # /api, which the Vite dev server proxies to the target below — so the
+      # browser never needs to resolve the `api` container name, and there is no
+      # cross-origin request.
+      VITE_PROXY_TARGET: http://api:3001
+    volumes:
+      # Source only — mounting all of ./web would shadow the image's node_modules.
+      - ./web/src:/app/src
+      - ./web/index.html:/app/index.html
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

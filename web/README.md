@@ -29,6 +29,13 @@ cp .env.example .env      # set VITE_API_URL
 npm run dev               # http://localhost:5173
 ```
 
+This expects an API already running on `VITE_API_URL`. To bring up the web app,
+the API and Postgres together instead, use the root compose file:
+
+```bash
+cd .. && docker compose up --build     # web on :5173, API on :3001
+```
+
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server on `:5173` with hot reload |
@@ -40,8 +47,11 @@ npm run dev               # http://localhost:5173
 | Variable | Value |
 |---|---|
 | `VITE_API_URL` | The API origin — **no trailing slash, no `/api` suffix** |
+| `VITE_PROXY_TARGET` | Optional. Overrides *only* the dev-server proxy target, leaving the client's base URL alone |
 
 `src/api.js` appends `/api` itself, so including it here would double up the path. Vite inlines the value at **build time**, which means changing it needs a rebuild, not just a restart. In development, Vite proxies API calls to this origin so there are no CORS issues locally.
+
+`VITE_PROXY_TARGET` exists because that single variable normally does two jobs — the base URL the browser calls *and* the origin the dev proxy forwards to. Those coincide locally but not in Docker, where the browser must reach the API through `localhost:5173` while the proxy itself has to dial the `api` container by name. The root compose file therefore leaves `VITE_API_URL` unset (so the client calls a relative `/api`) and sets `VITE_PROXY_TARGET` instead. You will not need it outside Docker.
 
 ---
 
@@ -66,6 +76,7 @@ web/
 │   ├── App.jsx                 # Routing, auth state, route guards
 │   └── main.jsx                # Entry point — mounts <App /> into #root
 ├── index.html                  # HTML shell, loads Syne + DM Sans from Google Fonts
+├── Dockerfile                  # Dev-server image used by the root compose file
 ├── vite.config.js              # Dev server and API proxy config
 ├── vercel.json                 # SPA rewrite — all routes served from index.html
 ├── .env.example                # Copy to .env

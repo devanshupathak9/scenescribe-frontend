@@ -13,6 +13,9 @@ npm start
 
 # With Docker (recommended — spins up Postgres + API together)
 docker compose up --build
+
+# Or the whole stack including the web app, from the repo root
+cd .. && docker compose up --build
 ```
 
 No test suite is configured. There is no linter config.
@@ -23,6 +26,8 @@ Copy `.env.example` to `.env` and set at minimum:
 - `DATABASE_URL` — Postgres connection string (e.g. `postgres://postgres:password@localhost:5432/scenescribe`)
 - `JWT_SECRET` — any strong secret string
 - `OPENAI_API_KEY` — for AI feedback on submissions (GPT-4o via `services/sentenceAnalysis.js`)
+
+`DATABASE_SSL` is optional: `config/database.js` auto-detects from the hostname in `DATABASE_URL` (SSL off for `localhost`/`127.0.0.1`/`::1`/`db`/`postgres`, on for hosted databases). Set it to `true`/`false` only to override. SSL was previously hard-required, which made the API unable to talk to its own compose Postgres — don't reintroduce that.
 
 SMTP variables (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`) are optional locally — when absent, OTPs are printed to the server console instead of being emailed.
 
